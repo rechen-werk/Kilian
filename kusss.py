@@ -4,7 +4,7 @@
     This part is responsible for fetching users calendars.
 """
 
-from datetime import datetime
+# from datetime import datetime
 from urllib.parse import urlparse, parse_qs
 import requests
 from icalendar import Calendar
@@ -14,30 +14,34 @@ __calendar_path__ = "/kusss/published-calendar.action"
 __TOKEN__ = "token"
 __lang__ = "de"
 
-courses = []  # TODO: fill with data from database on bootup
 
-
-def data_structure(link: str):
+def courses(link: str):
+    all_courses = set()
     i_calendar = calendar(link)
     cal = Calendar.from_ical(i_calendar)
     for component in cal.walk():
         if component.name == "VEVENT":
-            summary: str = component.get('summary')
-            summary_list = summary.split(" / ")
+            summary = component.get('summary').split(" / ")
 
             # delete tag of exams
-            if len(summary_list) > 3:
-                summary_list = summary_list[1:]
+            if len(summary) > 3:
+                summary = summary[1:]
 
-            lva_type = summary_list[0][:2]
-            lva_name = summary_list[0][3:]
-            teacher = summary_list[1]
-            lva_nr = summary_list[2][1:7]
-            semester = summary_list[2][8:13]
+            all_courses.add(
+                Course(
+                    lva_type=summary[0][:2],
+                    lva_name=summary[0][3:],
+                    teacher=summary[1],
+                    lva_nr=summary[2][1:7],
+                    semester=summary[2][8:13]
+                )
+            )
 
-            start: datetime = component.get('dtstart').dt
-            end: datetime = component.get('dtend').dt
-            location: str = component.get('location')
+            # parse data for timetable
+            # start: datetime = component.get('dtstart').dt
+            # end: datetime = component.get('dtend').dt
+            # location: str = component.get('location')
+    return all_courses
 
 
 def calendar(link: str):
@@ -83,10 +87,20 @@ class Course:
         self.lva_nr = lva_nr
         self.semester = semester
 
+    def __eq__(self, other):
+        return isinstance(other, Course) and self.lva_nr == other.lva_nr and self.semester == other.semester
 
-class Class:
-    def __init__(self, start: datetime, end: datetime, course: Course, location: str):
-        self.start = start
-        self.end = end
-        self.course = course
-        self.location = location
+    def __ne__(self, other):
+        return not __eq__(other)
+
+    def __hash__(self):
+        return hash(self.lva_nr + self.semester)
+
+
+# Class data structure for timetables later eventually
+# class Class:
+#    def __init__(self, start: datetime, end: datetime, course: Course, location: str):
+#        self.start = start
+#        self.end = end
+#        self.course = course
+#        self.location = location
