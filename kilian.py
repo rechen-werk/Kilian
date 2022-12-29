@@ -5,7 +5,7 @@
 """
 
 import argparse
-import discord_bot.bot as kilian
+import bot as kilian
 
 
 def parse_args():
@@ -26,7 +26,7 @@ def parse_args():
 
 
 def read_token_file():
-    with open("secret", 'r') as f:
+    with open("secrets", 'r') as f:
         return f.readlines()[0].strip()
 
 
