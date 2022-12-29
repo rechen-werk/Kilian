@@ -15,6 +15,6 @@ def init_slashcommands():
 
 
 def start(token: str):
-    token, content = kusss.calendar("https://www.kusss.jku.at/kusss/published-calendar.action?token=DRKoIE4v-D2WudkOWr-T5o52DsrPA4TLfoZYLyYP&lang=en")
+    kusss.data_structure("https://www.kusss.jku.at/kusss/published-calendar.action?token=DRKoIE4v-D2WudkOWr-T5o52DsrPA4TLfoZYLyYP&lang=de")
     bot = commands.Bot(command_prefix=".", intents=discord.Intents.default())
     bot.run(token)
