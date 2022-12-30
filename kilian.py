@@ -1,11 +1,12 @@
 """
     File name: kilian.py
     Author: Adrian Vinojcic
-    This part is responsible for config and argument parsing as well as providing the necessary information to the bot.
+    This part is responsible for everything related to the discord api.
 """
 
 import argparse
-import bot as kilian
+import interactions
+import kusss as uni
 
 
 def parse_args():
@@ -17,11 +18,6 @@ def parse_args():
         dest='token',
         help="Provide the Discord Bot Token as string."
     )
-    parser.add_argument(
-        "-i",
-        action="store_true",
-        help="Initialize the slash commands(only necessary on first startup)."
-    )
     return parser.parse_args()
 
 
@@ -32,6 +28,19 @@ def read_token_file():
 
 if __name__ == '__main__':
     args = parse_args()
-    if args.i:
-        kilian.init_slashcommands()
-    kilian.start(args.token if args.token is not None else read_token_file())
+    bot_token = args.token if args.token is not None else read_token_file()
+
+    bot = interactions.Client(token=bot_token)
+
+    @bot.command()
+    @interactions.option(description="Provide the calendar link from KUSSS here.")
+    async def kusss(ctx: interactions.CommandContext, link: str):
+        """Take advantage of the features provided by Kilian™."""
+        user_token = uni.token(link)
+        courses = uni.courses(link)
+        s = ""
+        for course in courses:
+            s += course.name + "\n"
+        await ctx.send(s)
+
+    bot.start()
