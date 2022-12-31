@@ -60,7 +60,7 @@ def courses(user_token: str):
 
 
 def __calendar__(user_token: str):
-    _, content = __token_and_content__("https://{}{}?{}={}&lang={}".format(__kusss__, __calendar_path__, __TOKEN__, user_token, __lang__))
+    _, content = __token_and_content__(f"https://{__kusss__}{__calendar_path__}?{__TOKEN__}={user_token}&lang={__lang__}")
     return content
 
 
@@ -72,16 +72,16 @@ def token(link: str):
 def __token_and_content__(link: str):
     url = urlparse(link)
     if url.netloc != __kusss__ or url.path != __calendar_path__:
-        raise InvalidURLException(link, "Invalid URL.")
+        raise InvalidURLException(link, "Invalid URL. You can get it from https://www.kusss.jku.at/kusss/ical-multi-form-sz.action.")
 
     try:
         user_token = parse_qs(url.query)[__TOKEN__][0]
     except Exception:
-        raise InvalidURLException(link, "Token not in query.")
-    link = "https://{}{}?{}={}&lang={}".format(__kusss__, __calendar_path__, __TOKEN__, user_token, __lang__)
+        raise InvalidURLException(link, "Token not in query. Just copy the link which you can generate on https://www.kusss.jku.at/kusss/ical-multi-form-sz.action.")
+    link = f"https://{__kusss__}{__calendar_path__}?{__TOKEN__}={user_token}&lang={__lang__}"
     content = requests.get(link).content
     if len(content) == 0:
-        raise InvalidURLException(link, "Token malformed or deprecated.")
+        raise InvalidURLException(link, "Token malformed or deprecated. I don't know what you did, but just copy the genereated link from https://www.kusss.jku.at/kusss/ical-multi-form-sz.action.")
     return user_token, content
 
 
