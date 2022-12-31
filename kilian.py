@@ -37,7 +37,7 @@ if __name__ == '__main__':
     async def kusss(ctx: interactions.CommandContext, link: str):
         """Take advantage of the features provided by Kilian™."""
         user_token = uni.token(link)
-        courses = uni.courses(link)
+        courses = uni.courses(user_token)
         s = ""
         for course in courses:
             s += course.name + "\n"

@@ -4,10 +4,13 @@
     This part is responsible for fetching users calendars.
 """
 
+from io import StringIO
 # from datetime import datetime
 from urllib.parse import urlparse, parse_qs
 import requests
 from icalendar import Calendar
+from lxml import html
+import pandas
 
 __kusss__ = "www.kusss.jku.at"
 __calendar_path__ = "/kusss/published-calendar.action"
@@ -15,9 +18,21 @@ __TOKEN__ = "token"
 __lang__ = "de"
 
 
-def courses(link: str):
-    all_courses = set()
-    i_calendar = calendar(link)
+def all_courses():
+    content = requests.get("https://kusss.jku.at/kusss/coursecatalogue-search-lvas.action?").content
+    table = html.fromstring(content).xpath("/html/body/table/tr[2]/td[2]/table/tr[2]/td/div/table[2]")[0]
+    table_string = html.tostring(table).decode()
+    df = pandas.read_html(StringIO(table_string), decimal=",", thousands=".")[0]
+    # df.to_csv("2022.csv", decimal=",", sep=";", index=False)
+    kusss_courses = set()
+    for _, row in df.iterrows():
+        kusss_courses.add(Course(lva_type=row["Typ"], lva_name=row["LVA-Titel"], teacher=row["LeiterIn"], lva_nr=row["LVA-Nr."], semester=row["Sem."]))
+    return kusss_courses
+
+
+def courses(user_token: str):
+    user_courses = set()
+    i_calendar = __calendar__(user_token)
     cal = Calendar.from_ical(i_calendar)
     for component in cal.walk():
         if component.name == "VEVENT":
@@ -27,7 +42,7 @@ def courses(link: str):
             if len(summary) > 3:
                 summary = summary[1:]
 
-            all_courses.add(
+            user_courses.add(
                 Course(
                     lva_type=summary[0][:2],
                     lva_name=summary[0][3:],
@@ -41,11 +56,11 @@ def courses(link: str):
             # start: datetime = component.get('dtstart').dt
             # end: datetime = component.get('dtend').dt
             # location: str = component.get('location')
-    return all_courses
+    return user_courses
 
 
-def calendar(link: str):
-    _, content = __token_and_content__(link)
+def __calendar__(user_token: str):
+    _, content = __token_and_content__("https://{}{}?{}={}&lang={}".format(__kusss__, __calendar_path__, __TOKEN__, user_token, __lang__))
     return content
 
 
@@ -95,7 +110,6 @@ class Course:
 
     def __hash__(self):
         return hash(self.lva_nr + self.semester)
-
 
 # Class data structure for timetables later eventually
 # class Class:
