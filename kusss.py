@@ -72,16 +72,16 @@ def token(link: str):
 def __token_and_content__(link: str):
     url = urlparse(link)
     if url.netloc != __kusss__ or url.path != __calendar_path__:
-        raise InvalidURLException(link, "Invalid URL. You can get it from https://www.kusss.jku.at/kusss/ical-multi-form-sz.action.")
+        raise InvalidURLException(link, "Invalid URL.")
 
     try:
         user_token = parse_qs(url.query)[__TOKEN__][0]
     except Exception:
-        raise InvalidURLException(link, "Token not in query. Just copy the link which you can generate on https://www.kusss.jku.at/kusss/ical-multi-form-sz.action.")
+        raise InvalidURLException(link, "Token not in query.")
     link = f"https://{__kusss__}{__calendar_path__}?{__TOKEN__}={user_token}&lang={__lang__}"
     content = requests.get(link).content
     if len(content) == 0:
-        raise InvalidURLException(link, "Token malformed or deprecated. I don't know what you did, but just copy the genereated link from https://www.kusss.jku.at/kusss/ical-multi-form-sz.action.")
+        raise InvalidURLException(link, "Token malformed or deprecated.")
     return user_token, content
 
 
@@ -89,7 +89,7 @@ class InvalidURLException(Exception):
     """Exception raised for invalid calendar links provided by the user."""
 
     def __init__(self, link: str, message="Provided link is not valid"):
-        self.message = message
+        self.message = message + " You can get your link from https://www.kusss.jku.at/kusss/ical-multi-form-sz.action."
         self.link = link
         super().__init__(self.message)
 
