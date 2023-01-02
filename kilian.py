@@ -34,10 +34,11 @@ if __name__ == '__main__':
 
     @bot.command()
     @interactions.option(description="Provide the calendar link from KUSSS here.")
-    async def kusss(ctx: interactions.CommandContext, link: str):
+    @interactions.option(description="Optionally provide your matriculation number here.")
+    async def kusss(ctx: interactions.CommandContext, link: str, studentnumber: str = None):
         """Take advantage of the features provided by Kilian™."""
         try:
-            user_token = uni.token(link)
+            student = uni.student(str(ctx.author.id), link, studentnumber)
             user_id = ctx.author.id
 
             # TODO: save *user_id* and *user_token* into database
@@ -64,7 +65,7 @@ if __name__ == '__main__':
         """Ping everyone partaking that subject."""
         role_id = role.id
 
-        # TODO: check if said role is a managed role and send an empheral errormessage otherwise
+        # TODO: check if said role is a managed role and send an ephemeral errormessage otherwise
         # TODO: get all users mapped to said *role_id*
         users_with_anonymous_role = set()
 
@@ -92,8 +93,5 @@ if __name__ == '__main__':
 
         # TODO: ping all users with said role in one message
         await message.reply("ok ok")
-
-    # await message.get_channel().send(message.author.mention)
-
 
     bot.start()
