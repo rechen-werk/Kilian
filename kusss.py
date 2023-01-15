@@ -33,6 +33,9 @@ class CourseKey:
     def __hash__(self):
         return hash(self.lva_nr + self.semester)
 
+    def to_db_entry(self) -> tuple:
+        return self.lva_nr, self.semester
+
 
 class Class(CourseKey):
     def __init__(self, lva_nr: str, semester: str, start: datetime, end: datetime, location: str):
@@ -54,6 +57,9 @@ class Class(CourseKey):
 
     def __hash__(self):
         return hash(self.lva_nr + self.semester + self.location) ^ hash(self.start) ^ hash(self.end)
+
+    def to_db_entry(self) -> tuple:
+        return self.lva_nr, self.semester, self.start, self.end, self.location
 
 
 class Course(CourseKey):
@@ -84,6 +90,9 @@ class Course(CourseKey):
 
         return all_classes
 
+    def to_db_entry(self) -> tuple:
+        return self.lva_nr, self.semester, self.lva_type, self.lva_name, str(self.teachers), self.link
+
 
 class Student:
     def __init__(self, discord_id: str, calendar_link: str, courses: set[CourseKey], student_id: str = None):
@@ -100,6 +109,9 @@ class Student:
 
     def __hash__(self):
         return hash(self.discord_id)
+
+    def to_db_entry(self) -> tuple:
+        return self.discord_id, self.calendar_link, str(self.courses), self.student_id
 
 
 def courses() -> set[Course]:
