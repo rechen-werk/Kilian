@@ -7,6 +7,7 @@
 import argparse
 import interactions
 import kusss as uni
+from database import Database
 
 
 def parse_args():
@@ -30,6 +31,9 @@ if __name__ == '__main__':
     args = parse_args()
     bot_token = args.token if args.token is not None else read_token_file()
 
+    # TODO: connect do database api and use it in the commands
+    database = Database()
+
     bot = interactions.Client(token=bot_token, intents=interactions.Intents.ALL)
 
     @bot.command()
@@ -39,9 +43,7 @@ if __name__ == '__main__':
         """Take advantage of the features provided by Kilian™."""
         try:
             student = uni.student(str(ctx.author.id), link, studentnumber)
-            user_id = ctx.author.id
-
-            # TODO: save *user_id* and *user_token* into database
+            database.insert(student)
             # TODO: map anonymous roles to user
 
             await ctx.send("Welcome on board " + ctx.author.name + "!")
@@ -85,8 +87,10 @@ if __name__ == '__main__':
     async def on_message_create(message: interactions.Message):
         if message.author.id == bot.me.id:
             return
-
         mentioned_roles = message.mention_roles
+        if len(mentioned_roles) == 0:
+            return
+
         # TODO: check if a role is a managed role
         # TODO: get all users mapped to said *role_id*
         users_with_anonymous_role = set()
