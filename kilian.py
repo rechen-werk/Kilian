@@ -80,18 +80,40 @@ if __name__ == '__main__':
         # POSSIBLE ERROR: too many users, so that not all pings fit in one message
         # POSSIBLE SOLUTION TO ERROR: give all pinged users the role temporarily, ping them, and remove the role
 
+    @bot.command()
+    @interactions.option(description="The user you want the student id of.")
+    async def studid(ctx: interactions.CommandContext, member: interactions.Member):
+        """Get student id of the specified user."""
+        member_id = member.id
+        student_id = "get id"
+        await ctx.send(student_id, ephemeral=True)
+
 
     @bot.event()
     async def on_message_create(message: interactions.Message):
         if message.author.id == bot.me.id:
             return
-
         mentioned_roles = message.mention_roles
+        if len(mentioned_roles) == 0:
+            return
+
         # TODO: check if a role is a managed role
         # TODO: get all users mapped to said *role_id*
         users_with_anonymous_role = set()
 
         # TODO: ping all users with said role in one message
         await message.reply("ok ok")
+
+    @bot.event()
+    async def on_guild_create(guild: interactions.Guild):
+        print(guild.member_count)
+
+
+    @bot.event()
+    async def on_start():
+        print("on_start")
+        for g in bot.guilds:
+            print(g.name)
+
 
     bot.start()
