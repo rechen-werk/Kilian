@@ -91,7 +91,8 @@ class Course(CourseKey):
         return all_classes
 
     def to_db_entry(self) -> tuple:
-        return self.lva_nr, self.semester, self.lva_type, self.lva_name, str(self.teachers), self.link
+        return self.lva_nr, self.semester, self.lva_type, self.lva_name, self.link  # no teachers
+
 
 
 class Student:
@@ -111,8 +112,7 @@ class Student:
         return hash(self.discord_id)
 
     def to_db_entry(self) -> tuple:
-        return self.discord_id, self.calendar_link, str(self.courses), self.student_id
-
+        return self.discord_id, self.student_id, self.calendar_link
 
 def courses() -> set[Course]:
     """Returns a list of all Courses held at JKU in the current semester."""
