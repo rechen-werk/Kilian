@@ -1,6 +1,6 @@
 """
     File name: database.py
-    Author:
+    Author: Tobias Pilz
     This part is responsible for everything related to the database.
 """
 import sqlite3

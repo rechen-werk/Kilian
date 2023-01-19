@@ -1,3 +1,9 @@
+"""
+    File name: sql_queries.py
+    Author: Tobias Pilz
+    This file contains all queries for database.py.
+"""
+
 insert_student = "REPLACE INTO " \
                  "student(discord_id, student_id, calendar_link) " \
                  "VALUES (?,?,?)"

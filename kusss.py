@@ -46,11 +46,11 @@ class Class(CourseKey):
 
     def __eq__(self, other):
         return isinstance(other, Class) and \
-               self.lva_nr == other.lva_nr and \
-               self.semester == other.semester and \
-               self.start == other.start and \
-               self.end == other.end and \
-               self.location == other.location
+            self.lva_nr == other.lva_nr and \
+            self.semester == other.semester and \
+            self.start == other.start and \
+            self.end == other.end and \
+            self.location == other.location
 
     def __ne__(self, other):
         return not __eq__(other)
@@ -94,7 +94,6 @@ class Course(CourseKey):
         return self.lva_nr, self.semester, self.lva_type, self.lva_name, self.link  # no teachers
 
 
-
 class Student:
     def __init__(self, discord_id: str, calendar_link: str, courses: set[CourseKey], student_id: str = None):
         self.discord_id = discord_id
@@ -113,6 +112,7 @@ class Student:
 
     def to_db_entry(self) -> tuple:
         return self.discord_id, self.student_id, self.calendar_link
+
 
 def courses() -> set[Course]:
     """Returns a list of all Courses held at JKU in the current semester."""

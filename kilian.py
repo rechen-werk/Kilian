@@ -31,7 +31,6 @@ if __name__ == '__main__':
     args = parse_args()
     bot_token = args.token if args.token is not None else read_token_file()
 
-    # TODO: connect do database api and use it in the commands
     database = Database()
 
     bot = interactions.Client(token=bot_token, intents=interactions.Intents.ALL)
@@ -44,6 +43,7 @@ if __name__ == '__main__':
         try:
             student = uni.student(str(ctx.author.id), link, studentnumber)
             database.insert(student)
+            # ctx.guild.create_role()
             # TODO: map anonymous roles to user
 
             await ctx.send("Welcome on board " + ctx.author.name + "!")
@@ -55,8 +55,7 @@ if __name__ == '__main__':
         """Unsubscribe from the awesome features provided by Kilian™."""
         user_id = ctx.author.id
 
-        # TODO: delete all rows which contain *user_id* from the database
-        # TODO: delete anonymous role mappings from user
+        # TODO: delete all roles (archive/delete channels) from server that only this user had
         database.delete_student(str(user_id))
 
         await ctx.send("A pity to see you leave " + ctx.author.name + ". You can join the club anytime with `/kusss`!")
@@ -67,6 +66,8 @@ if __name__ == '__main__':
     async def ping(ctx: interactions.CommandContext, role: interactions.Role, content: str = ""):
         """Ping everyone partaking that subject."""
         role_id = role.id
+        guild_id = ctx.guild_id
+
 
         # TODO: check if said role is a managed role and send an ephemeral errormessage otherwise
         # TODO: get all users mapped to said *role_id*
@@ -126,14 +127,14 @@ if __name__ == '__main__':
 
     @bot.event()
     async def on_guild_create(guild: interactions.Guild):
-        print(guild.member_count)
+        for member in guild.members:
+            user_id = member.id
+
 
 
     @bot.event()
     async def on_start():
-        print("on_start")
-        for g in bot.guilds:
-            print(g.name)
+        print("Good morning master!")
 
 
     bot.start()
