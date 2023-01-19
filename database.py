@@ -43,6 +43,10 @@ class Database:
             return NotImplemented
         self.__con__.commit()
 
+    def delete_student(self, discord_id: str):
+        self.__cur__.execute(query.delete_student, (discord_id,))
+        self.__con__.commit()
+
     def close(self):
         self.__cur__.close()
         self.__con__.close()

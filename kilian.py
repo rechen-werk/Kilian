@@ -57,6 +57,7 @@ if __name__ == '__main__':
 
         # TODO: delete all rows which contain *user_id* from the database
         # TODO: delete anonymous role mappings from user
+        database.delete_student(str(user_id))
 
         await ctx.send("A pity to see you leave " + ctx.author.name + ". You can join the club anytime with `/kusss`!")
 

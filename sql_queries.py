@@ -22,6 +22,8 @@ insert_roles = "REPLACE INTO " \
                "roles(guild_id, role_id, lva_nr, semester) " \
                "VALUES (?,?,?,?)"
 
+delete_student = "DELETE FROM student WHERE discord_id = ?"
+
 create_student = "CREATE TABLE IF NOT EXISTS student(" \
                  "discord_id text not null, " \
                  "student_id text, " \
@@ -43,7 +45,9 @@ create_student_courses = "CREATE TABLE IF NOT EXISTS student_courses(" \
                          "semester text not null, " \
                          "lva_nr text not null, " \
                          "primary key (discord_id, semester, lva_nr)," \
-                         "foreign key (discord_id) references student," \
+                         "CONSTRAINT fk_student" \
+                         "  foreign key (discord_id) references student" \
+                         "  ON DELETE CASCADE," \
                          "foreign key (lva_nr, semester) references course" \
                          ")"
 
