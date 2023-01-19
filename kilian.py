@@ -89,6 +89,23 @@ if __name__ == '__main__':
         await ctx.send(student_id, ephemeral=True)
 
 
+    @bot.command()
+    async def sleep(ctx: interactions.CommandContext):
+        """Make Kilian go nighty night."""
+
+        def is_dad(user_id: str):
+            with open("dads", 'r') as dads:
+                for line in dads.readlines():
+                    if line[:-1] == user_id:
+                        return True
+            return False
+
+        if is_dad(str(ctx.author.id)):
+            await ctx.send("Good night, daddy!", ephemeral=True)
+        else:
+            await ctx.send("You are not my daddy!", ephemeral=True)
+
+
     @bot.event()
     async def on_message_create(message: interactions.Message):
         if message.author.id == bot.me.id:
