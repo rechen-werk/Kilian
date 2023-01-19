@@ -72,21 +72,25 @@ if __name__ == '__main__':
     @interactions.option(description="Message content goes here.")
     async def ping(ctx: interactions.CommandContext, role: interactions.Role, content: str = ""):
         """Ping everyone partaking that subject."""
-        role_id = role.id
-        guild_id = ctx.guild_id
+        role_id = str(role.id)
+        guild_id = str(ctx.guild_id)
 
 
-        # TODO: check if said role is a managed role and send an ephemeral errormessage otherwise
-        # TODO: get all users mapped to said *role_id*
+        # DONE: check if said role is a managed role and send an ephemeral errormessage otherwise
+        # DONE: get all users mapped to said *role_id*
         users_with_anonymous_role = set()
+        if database.is_managed_role(guild_id, role_id):
+            users_with_anonymous_role = database.get_role_members(guild_id, role_id)
 
-        # TODO: ping all users with said role in one message
         ping_string = ""
-        for user in users_with_anonymous_role:
-            yield
+        for user_id in users_with_anonymous_role:
+            user = (await ctx.guild.get_member(int(user_id))).user
+            ping_string += user.mention
+
+        # DONE: ping all users with said role in one message
 
         message = await ctx.send(ping_string)
-        await message.edit(role.mention + "\n" + content)
+        # await message.edit(role.mention + "\n" + content)
 
         # POSSIBLE ERROR: too many users, so that not all pings fit in one message
         # POSSIBLE SOLUTION TO ERROR: give all pinged users the role temporarily, ping them, and remove the role
@@ -121,13 +125,19 @@ if __name__ == '__main__':
     async def on_message_create(message: interactions.Message):
         if message.author.id == bot.me.id:
             return
-        mentioned_roles = message.mention_roles
+        guild_id = str(message.guild_id)
+        mentioned_roles = [role_id for role_id in message.mention_roles if database.is_managed_role(guild_id, role_id)]
         if len(mentioned_roles) == 0:
             return
 
-        # TODO: check if a role is a managed role
-        # TODO: get all users mapped to said *role_id*
+        # DONE: check if a role is a managed role
+        # DONE: get all users mapped to said *role_id*
+
         users_with_anonymous_role = set()
+        for role_id in mentioned_roles:
+            users_with_anonymous_role = users_with_anonymous_role | database.get_role_members(guild_id, role_id)
+
+        print(users_with_anonymous_role)
 
         # TODO: ping all users with said role in one message
         await message.reply("ok ok")

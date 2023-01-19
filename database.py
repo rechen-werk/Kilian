@@ -18,6 +18,9 @@ class Database:
         self.__cur__ = self.__con__.cursor()
         self.__cur__.execute("PRAGMA foreign_keys = ON")
         self.__create_tables__()
+        # self.refresh()
+
+    def refresh(self):
         print("Pulling data from KUSSS")
         self.__cur__.executemany(query.insert_course, [c.to_db_entry() for c in kusss.courses()])
         self.__con__.commit()
@@ -46,6 +49,14 @@ class Database:
     def delete_student(self, discord_id: str):
         self.__cur__.execute(query.delete_student, (discord_id,))
         self.__con__.commit()
+
+    def is_managed_role(self, guild_id: str, role_id: str) -> bool:
+        result = list(self.__cur__.execute(query.select_role, (guild_id, role_id)))
+        return len(result) == 1
+
+    def get_role_members(self, guild_id: str, role_id: str) -> set:
+        result = self.__cur__.execute(query.select_role_students, (guild_id, role_id))
+        return {entry[0] for entry in result}
 
     def close(self):
         self.__cur__.close()

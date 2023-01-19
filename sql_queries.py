@@ -3,6 +3,7 @@
     Author: Tobias Pilz
     This file contains all queries for database.py.
 """
+import database
 
 insert_student = "REPLACE INTO " \
                  "student(discord_id, student_id, calendar_link) " \
@@ -83,3 +84,22 @@ create_roles = "CREATE TABLE IF NOT EXISTS roles(" \
                "primary key (guild_id, role_id)," \
                "foreign key (lva_nr, semester) references course" \
                ")"
+
+select_role = "SELECT * FROM roles " \
+              "WHERE (guild_id, role_id) = (?,?)"
+
+select_role_students = "SELECT discord_id FROM " \
+                       "student_courses INNER JOIN " \
+                       "roles r on " \
+                       "student_courses.lva_nr = r.lva_nr and " \
+                       "student_courses.semester = r.semester " \
+                       "WHERE (guild_id, role_id) = (?,?)"
+
+if __name__ == '__main__':
+    db = database.Database()
+    guild_id = "1013474125609701447"
+    role_id = "1054843641836867695"
+    if db.is_managed_role(guild_id, role_id):
+        result = db.get_role_members(guild_id, role_id)
+        for entry in result:
+            print(entry)
