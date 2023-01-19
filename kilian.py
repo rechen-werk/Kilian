@@ -43,8 +43,15 @@ if __name__ == '__main__':
         try:
             student = uni.student(str(ctx.author.id), link, studentnumber)
             database.insert(student)
-            # ctx.guild.create_role()
-            # TODO: map anonymous roles to user
+            for course_key in student.courses:
+                for guild in bot.guilds:
+                    course: uni.Course = None # get course from key in course_key
+
+                    # if role does not exist on this server
+                    # role = await guild.create_role(name=course.lva_name, color=0xD8E4FF)
+                    guild_id = guild.id
+                    # role_id = role.id
+                    # database.insert()
 
             await ctx.send("Welcome on board " + ctx.author.name + "!")
         except uni.InvalidURLException as ex:
