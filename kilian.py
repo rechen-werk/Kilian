@@ -89,7 +89,7 @@ if __name__ == '__main__':
 
         # DONE: ping all users with said role in one message
 
-        message = await ctx.send(ping_string)
+        message = await ctx.send(ping_string + "\n" + content)
         # await message.edit(role.mention + "\n" + content)
 
         # POSSIBLE ERROR: too many users, so that not all pings fit in one message
@@ -125,7 +125,9 @@ if __name__ == '__main__':
     async def on_message_create(message: interactions.Message):
         if message.author.id == bot.me.id:
             return
-        guild_id = str(message.guild_id)
+
+        guild = await message.get_guild()
+        guild_id = str(guild.id)
         mentioned_roles = [role_id for role_id in message.mention_roles if database.is_managed_role(guild_id, role_id)]
         if len(mentioned_roles) == 0:
             return
@@ -137,10 +139,20 @@ if __name__ == '__main__':
         for role_id in mentioned_roles:
             users_with_anonymous_role = users_with_anonymous_role | database.get_role_members(guild_id, role_id)
 
-        print(users_with_anonymous_role)
-
-        # TODO: ping all users with said role in one message
+        # DONE: ping all users with said role in one message
         await message.reply("ok ok")
+
+        ping_string = ""
+        for user_id in users_with_anonymous_role:
+            user = (await guild.get_member(int(user_id))).user
+            ping_string += user.mention
+
+        channel = await message.get_channel()
+
+        content = message.content
+        # await message.delete()
+        message = await channel.send(ping_string)
+        await message.edit(content)
 
     @bot.event()
     async def on_guild_create(guild: interactions.Guild):
