@@ -32,68 +32,74 @@ insert_roles = "REPLACE INTO " \
 delete_student = "DELETE FROM student WHERE discord_id = ?"
 
 create_student = "CREATE TABLE IF NOT EXISTS student(" \
-                 "discord_id text not null, " \
-                 "student_id text, " \
-                 "calendar_link text not null," \
-                 "primary key (discord_id)" \
+                 "discord_id TEXT NOT NULL, " \
+                 "student_id TEXT, " \
+                 "calendar_link TEXT NOT NULL, " \
+                 "PRIMARY KEY (discord_id)" \
                  ")"
 
 create_course = "CREATE TABLE IF NOT EXISTS course(" \
-                "lva_nr text not null, " \
-                "semester text not null, " \
-                "lva_type text not null , " \
-                "lva_name text not null , " \
-                "link text not null, " \
-                "primary key (lva_nr, semester)" \
+                "lva_nr TEXT NOT NULL, " \
+                "semester TEXT NOT NULL, " \
+                "lva_type TEXT NOT NULL, " \
+                "lva_name TEXT NOT NULL, " \
+                "link TEXT NOT NULL, " \
+                "PRIMARY KEY (lva_nr, semester)" \
                 ")"
 
 create_student_courses = "CREATE TABLE IF NOT EXISTS student_courses(" \
-                         "discord_id text not null, " \
-                         "semester text not null, " \
-                         "lva_nr text not null, " \
-                         "primary key (discord_id, semester, lva_nr)," \
+                         "discord_id TEXT NOT NULL, " \
+                         "semester TEXT NOT NULL, " \
+                         "lva_nr TEXT NOT NULL, " \
+                         "PRIMARY KEY (discord_id, semester, lva_nr)," \
                          "CONSTRAINT fk_student" \
-                         "  foreign key (discord_id) references student" \
+                         "  FOREIGN KEY (discord_id) REFERENCES student" \
                          "  ON DELETE CASCADE," \
-                         "foreign key (lva_nr, semester) references course" \
+                         "FOREIGN KEY (lva_nr, semester) REFERENCES course" \
                          ")"
 
 create_course_teacher = "CREATE TABLE IF NOT EXISTS course_teacher(" \
-                        "teacher_name text not null, " \
-                        "semester text not null," \
-                        "lva_nr integer not null, " \
-                        "primary key (teacher_name, semester, lva_nr)," \
-                        "foreign key (lva_nr, semester) references course" \
+                        "teacher_name TEXT NOT NULL, " \
+                        "semester TEXT NOT NULL, " \
+                        "lva_nr INTEGER NOT NULL, " \
+                        "PRIMARY KEY (teacher_name, semester, lva_nr)," \
+                        "FOREIGN KEY (lva_nr, semester) REFERENCES course" \
                         ")"
 
 create_class = "CREATE TABLE IF NOT EXISTS class(" \
-               "lva_nr text not null, " \
-               "semester text not null, " \
-               "start_time integer not null, " \
-               "end_time integer not null, " \
-               "location text not null," \
-               "primary key (lva_nr, semester, start_time, end_time, location)," \
-               "foreign key (lva_nr, semester) references course" \
+               "lva_nr TEXT NOT NULL, " \
+               "semester TEXT NOT NULL, " \
+               "start_time INTEGER NOT NULL, " \
+               "end_time INTEGER NOT NULL, " \
+               "location TEXT NOT NULL, " \
+               "PRIMARY KEY (lva_nr, semester, start_time, end_time, location)," \
+               "FOREIGN KEY (lva_nr, semester) REFERENCES course" \
                ")"
 
 create_roles = "CREATE TABLE IF NOT EXISTS roles(" \
-               "guild_id text not null," \
-               "role_id text not null," \
-               "lva_nr text not null," \
-               "semester text not null," \
-               "primary key (guild_id, role_id)," \
-               "foreign key (lva_nr, semester) references course" \
+               "guild_id TEXT NOT NULL," \
+               "role_id TEXT NOT NULL," \
+               "lva_nr TEXT NOT NULL," \
+               "semester TEXT NOT NULL," \
+               "PRIMARY KEY (guild_id, role_id)," \
+               "FOREIGN KEY (lva_nr, semester) REFERENCES course" \
                ")"
 
-select_role = "SELECT * FROM roles " \
+select_role = "SELECT * " \
+              "FROM roles " \
               "WHERE (guild_id, role_id) = (?,?)"
 
-select_role_students = "SELECT discord_id FROM " \
-                       "student_courses INNER JOIN " \
-                       "roles r on " \
-                       "student_courses.lva_nr = r.lva_nr and " \
+select_role_students = "SELECT discord_id " \
+                       "FROM student_courses " \
+                       "INNER JOIN roles r ON " \
+                       "student_courses.lva_nr = r.lva_nr " \
+                       "AND " \
                        "student_courses.semester = r.semester " \
                        "WHERE (guild_id, role_id) = (?,?)"
+
+select_student_courses = "SELECT semester, lva_nr " \
+                         "FROM student_courses " \
+                         "WHERE discord_id = (?)"
 
 if __name__ == '__main__':
     db = database.Database()
