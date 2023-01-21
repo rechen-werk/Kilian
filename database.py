@@ -18,7 +18,7 @@ class Database:
         self.__cur__ = self.__con__.cursor()
         self.__cur__.execute("PRAGMA foreign_keys = ON")
         self.__create_tables__()
-        # self.refresh()
+        self.refresh()
 
     def refresh(self):
         print("Pulling data from KUSSS")
@@ -35,15 +35,16 @@ class Database:
         self.__cur__.execute(query.create_roles)
 
     def insert(self, obj):
-        if isinstance(obj, Student):
-            self.__cur__.execute(query.insert_student, obj.to_db_entry())
-            self.__cur__.executemany(query.insert_student_courses, [(obj.discord_id, course.lva_nr, course.semester) for course in obj.courses])
-        elif isinstance(obj, Course):
-            self.__cur__.execute(query.insert_course, obj.to_db_entry())
-        elif isinstance(obj, Class):
-            self.__cur__.execute(query.insert_class, obj.to_db_entry())
-        else:
-            return NotImplemented
+        match obj:
+            case Student():
+                self.__cur__.execute(query.insert_student, obj.to_db_entry())
+                self.__cur__.executemany(query.insert_student_courses, [(obj.discord_id, course.lva_nr, course.semester) for course in obj.courses])
+            case Course():
+                self.__cur__.execute(query.insert_course, obj.to_db_entry())
+            case Class():
+                self.__cur__.execute(query.insert_class, obj.to_db_entry())
+            case _:
+                return NotImplemented
         self.__con__.commit()
 
     def delete_student(self, discord_id: str):
