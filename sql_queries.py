@@ -31,6 +31,8 @@ insert_roles = "REPLACE INTO " \
 
 delete_student = "DELETE FROM student WHERE discord_id = ?"
 
+delete_role = "DELETE FROM roles WHERE (guild_id, role_id) = (?,?)"
+
 create_student = "CREATE TABLE IF NOT EXISTS student(" \
                  "discord_id TEXT NOT NULL, " \
                  "student_id TEXT, " \
@@ -85,9 +87,9 @@ create_roles = "CREATE TABLE IF NOT EXISTS roles(" \
                "FOREIGN KEY (lva_nr, semester) REFERENCES course" \
                ")"
 
-select_role = "SELECT * " \
-              "FROM roles " \
-              "WHERE (guild_id, role_id) = (?,?)"
+select_role_by_id = "SELECT * " \
+                    "FROM roles " \
+                    "WHERE (guild_id, role_id) = (?,?)"
 
 select_role_students = "SELECT discord_id " \
                        "FROM student_courses " \
@@ -97,9 +99,21 @@ select_role_students = "SELECT discord_id " \
                        "student_courses.semester = r.semester " \
                        "WHERE (guild_id, role_id) = (?,?)"
 
-select_student_courses = "SELECT semester, lva_nr " \
+select_student_courses = "SELECT lva_nr, semester " \
                          "FROM student_courses " \
                          "WHERE discord_id = (?)"
+
+select_course = "SELECT * " \
+                "FROM course " \
+                "WHERE (lva_nr, semester) = (?,?)"
+
+select_role_by_lva = "SELECT role_id " \
+                     "FROM roles " \
+                     "WHERE (guild_id, lva_nr, semester) = (?,?,?)"
+
+select_student_courses_by_lva = "SELECT * " \
+                                "FROM student_courses " \
+                                "WHERE (lva_nr, semester) = (?,?)"
 
 if __name__ == '__main__':
     db = database.Database()

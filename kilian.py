@@ -7,7 +7,7 @@
 import argparse
 import interactions
 import kusss as uni
-from database import Database
+from database import Database, Roles
 import json
 
 
@@ -38,15 +38,19 @@ if __name__ == '__main__':
         try:
             student = uni.student(str(ctx.author.id), link, studentnumber)
             database.insert(student)
-            for course_key in student.courses:
-                for guild in bot.guilds:
-                    course: uni.Course = None  # get course from key in course_key
-
-                    # if role does not exist on this server
-                    # role = await guild.create_role(name=course.lva_name, color=0xD8E4FF)
-                    guild_id = guild.id  # role_id = role.id  # database.insert()
 
             await ctx.send("Welcome on board " + ctx.author.name + "!")
+
+            added_courses = database.get_added_courses(student.discord_id)
+            unmanaged_courses = {database.get_course(*entry) for entry in added_courses if not database.is_managed_course(str(ctx.guild_id), *entry)}
+
+            added_roles = Roles()
+            for course in unmanaged_courses:
+                role = await ctx.guild.create_role(course.lva_name)
+                added_roles.add((str(ctx.guild_id), str(role.id), course.lva_nr, course.semester))
+
+            database.insert(added_roles)
+
         except uni.InvalidURLException as ex:
             await ctx.send(ex.message, ephemeral=True)
 
@@ -54,12 +58,18 @@ if __name__ == '__main__':
     @bot.command()
     async def unkusss(ctx: interactions.CommandContext):
         """Unsubscribe from the awesome features provided by Kilian™."""
-        user_id = ctx.author.id
-
-        # TODO: delete all roles (archive/delete channels) from server that only this user had
-        database.delete_student(str(user_id))
+        user_id = str(ctx.author.id)
+        guild_id = str(ctx.guild_id)
 
         await ctx.send("A pity to see you leave " + ctx.author.name + ". You can join the club anytime with `/kusss`!")
+        courses = database.get_added_courses(user_id)
+        database.delete_student(user_id)
+        roles_to_delete = {database.get_role(guild_id, course[0], course[1]) for course in courses if not database.is_needed_course(*course)}
+
+        for role in roles_to_delete:
+            await ctx.guild.delete_role(int(role), "Not needed anymore!")
+
+        database.delete_roles(guild_id, roles_to_delete)
 
 
     @bot.command()
