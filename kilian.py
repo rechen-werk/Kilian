@@ -8,6 +8,7 @@ import argparse
 import interactions
 import kusss as uni
 from database import Database
+import json
 
 
 def parse_args():
@@ -16,14 +17,13 @@ def parse_args():
     return parser.parse_args()
 
 
-def read_token_file():
-    with open("secrets", 'r') as f:
-        return f.readlines()[0].strip()
-
-
 if __name__ == '__main__':
     args = parse_args()
-    bot_token = args.token if args.token is not None else read_token_file()
+
+    with open("config.json", 'r') as f:
+        data = json.load(f)
+        bot_token = args.token if args.token is not None else data['token']
+        dads = data['dads']
 
     database = Database()
 
@@ -99,15 +99,9 @@ if __name__ == '__main__':
     async def sleep(ctx: interactions.CommandContext):
         """Make Kilian go nighty night."""
 
-        def is_dad(user_id: str):
-            with open("dads", 'r') as dads:
-                for line in dads.readlines():
-                    if line[:-1] == user_id:
-                        return True
-            return False
-
-        if is_dad(str(ctx.author.id)):
+        if dads.count(str(ctx.author.id)):
             await ctx.send("Good night, daddy!", ephemeral=True)
+            await bot._stop()
         else:
             await ctx.send("You are not my daddy!", ephemeral=True)
 

@@ -124,11 +124,12 @@ def courses() -> set[Course]:
 
     for row in table.find_all("tr")[1:]:
         cols = row.findAll("td")
+        names = [c.strip() for c in cols[1].text.split("\n")[2:4]]
         all_courses.add(Course(
             lva_nr="".join(cols[0].text.strip().split(".")),
             semester=cols[5].text.strip(),
             lva_type=cols[2].text.strip(),
-            lva_name=" ".join(cols[1].text.split()),
+            lva_name=names[0] if names[1] == "" else " - ".join(names),
             teachers=list(map(lambda elem: elem.text.strip(), cols[4].findAll("a"))),
             link=f'www.kusss.jku.at/kusss/{cols[0].find("a")["href"].strip()}'
         ))
