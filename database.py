@@ -90,6 +90,10 @@ class Database:
         result = list(self.__cur__.execute(query.select_role_by_lva, (guild_id, lva_nr, semester)))
         return result[0][0]
 
+    def get_student_ids(self):
+        result = self.__cur__.execute(query.select_discord_ids)
+        return {entry[0] for entry in result}
+
     def close(self):
         self.__cur__.close()
         self.__con__.close()

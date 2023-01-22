@@ -1,6 +1,6 @@
 """
     File name: kilian.py
-    Author: Adrian Vinojcic
+    Author: Adrian Vinojcic, Tobias Pilz
     This part is responsible for everything related to the discord api.
 """
 
@@ -93,7 +93,8 @@ if __name__ == '__main__':
 
         await ctx.send(ping_string + "\n" + content)
 
-        # POSSIBLE ERROR: too many users, so that not all pings fit in one message  # POSSIBLE SOLUTION TO ERROR: give all pinged users the role temporarily, ping them, and remove the role
+        # POSSIBLE ERROR: too many users, so that not all pings fit in one message
+        # POSSIBLE SOLUTION TO ERROR: multiple messages
 
 
     @bot.command()
@@ -147,8 +148,10 @@ if __name__ == '__main__':
 
     @bot.event()
     async def on_guild_create(guild: interactions.Guild):
-        for member in guild.members:
-            user_id = member.id
+        known_users = [user.id for user in guild.members if user.id in database.get_student_ids()]
+
+        for user in known_users:
+            print(user)
 
 
     @bot.event()

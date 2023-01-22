@@ -115,6 +115,8 @@ select_student_courses_by_lva = "SELECT * " \
                                 "FROM student_courses " \
                                 "WHERE (lva_nr, semester) = (?,?)"
 
+select_discord_ids = "SELECT discord_id FROM student"
+
 if __name__ == '__main__':
     db = database.Database()
     guild_id = "1013474125609701447"
