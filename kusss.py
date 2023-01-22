@@ -4,6 +4,7 @@
     This part is responsible for fetching users calendars.
 """
 import datetime
+import re
 from urllib.parse import urlparse, parse_qs
 import requests
 from icalendar import Calendar
@@ -169,6 +170,13 @@ def student(discord_id: str, link: str, student_id: str = None) -> Student:
                     lva_nr=summary[2][1:7],
                     semester=semester
                 ))
+
+    if student_id is not None:
+        student_ids = re.findall(r"(\d{8})", student_id)
+        if len(student_ids) != 0:
+            student_id = student_ids[0]
+        else:
+            student_id = None
 
     return Student(
         discord_id=discord_id,
