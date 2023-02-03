@@ -44,10 +44,21 @@ if __name__ == '__main__':
             added_courses = database.get_added_courses(student.discord_id)
             unmanaged_courses = {database.get_course(*entry) for entry in added_courses if not database.is_managed_course(str(ctx.guild_id), *entry)}
 
+            if database.has_category(str(ctx.guild_id)):
+                random_guild_channel_id = database.random_guild_channel_id(str(ctx.guild_id))
+                random_guild_channel = next(x for x in (await ctx.guild.get_all_channels()) if x.id == random_guild_channel_id)
+                category = random_guild_channel
+            else:
+                category = await ctx.guild.create_channel(name="uni", type=interactions.ChannelType.GUILD_CATEGORY)
+
             added_roles = Roles()
             for course in unmanaged_courses:
                 role = await ctx.guild.create_role(course.lva_name)
-                added_roles.add((str(ctx.guild_id), str(role.id), course.lva_nr, course.semester))
+                channel = await ctx.guild.create_channel(name=course.lva_name, type=interactions.ChannelType.GUILD_TEXT, parent_id=category, permission_overwrites=[
+                    interactions.Overwrite(id=str(ctx.author.id), type=1, allow=interactions.Permissions.VIEW_CHANNEL)
+                ])
+                added_roles.add((str(ctx.guild_id), str(role.id), str(channel.id), course.lva_nr, course.semester))
+            # TODO: Move create_channel out of loop into own loop and create channel / add person to channel if it already exists
 
             database.insert(added_roles)
 
@@ -115,6 +126,18 @@ if __name__ == '__main__':
             await bot._stop()
         else:
             await ctx.send("You are not my daddy!", ephemeral=True)
+
+    @bot.command()
+    @interactions.option(description="name of the channel")
+    async def test(ctx: interactions.CommandContext, name: str):
+        """Create a text channel"""
+        from interactions import Permissions as perms
+        print(name)
+        category = await ctx.guild.create_channel(name="uni", type=interactions.ChannelType.GUILD_CATEGORY, permission_overwrites=[
+            interactions.Overwrite(id=305009439843549184, type=1, allow=perms.ATTACH_FILES | perms.VIEW_CHANNEL)
+        ])
+        channel = await ctx.guild.create_channel(name=name, type=interactions.ChannelType.GUILD_TEXT, parent_id=category.id, permission_overwrites=[])
+        await ctx.send(name)
 
 
     @bot.event()

@@ -26,8 +26,8 @@ insert_class = "REPLACE INTO " \
                "VALUES (?,?,?,?,?)"
 
 insert_roles = "REPLACE INTO " \
-               "roles(guild_id, role_id, lva_nr, semester) " \
-               "VALUES (?,?,?,?)"
+               "roles(guild_id, role_id, channel_id, lva_nr, semester) " \
+               "VALUES (?,?,?,?,?)"
 
 delete_student = "DELETE FROM student WHERE discord_id = ?"
 
@@ -81,6 +81,7 @@ create_class = "CREATE TABLE IF NOT EXISTS class(" \
 create_roles = "CREATE TABLE IF NOT EXISTS roles(" \
                "guild_id TEXT NOT NULL," \
                "role_id TEXT NOT NULL," \
+               "channel_id TEXT NOT NULL," \
                "lva_nr TEXT NOT NULL," \
                "semester TEXT NOT NULL," \
                "PRIMARY KEY (guild_id, role_id)," \
@@ -111,17 +112,16 @@ select_role_by_lva = "SELECT role_id " \
                      "FROM roles " \
                      "WHERE (guild_id, lva_nr, semester) = (?,?,?)"
 
+select_channel_by_lva = "SELECT channel_id " \
+                        "FROM roles " \
+                        "WHERE (guild_id, lva_nr, semester) = (?,?,?)"
+
+select_guild_channels = "SELECT channel_id " \
+                        "FROM roles " \
+                        "WHERE (guild_id) = (?)"
+
 select_student_courses_by_lva = "SELECT * " \
                                 "FROM student_courses " \
                                 "WHERE (lva_nr, semester) = (?,?)"
 
 select_discord_ids = "SELECT discord_id FROM student"
-
-if __name__ == '__main__':
-    db = database.Database()
-    guild_id = "1013474125609701447"
-    role_id = "1054843641836867695"
-    if db.is_managed_role(guild_id, role_id):
-        result = db.get_role_members(guild_id, role_id)
-        for entry in result:
-            print(entry)
