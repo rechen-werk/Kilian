@@ -13,7 +13,8 @@ import json
 
 def parse_args():
     parser = argparse.ArgumentParser()
-    parser.add_argument("-t", "--token", type=str, required=False, dest='token', help="Provide the Discord Bot Token as string.")
+    parser.add_argument("-t", "--token", type=str, required=False, dest='token',
+                        help="Provide the Discord Bot Token as string.")
     return parser.parse_args()
 
 
@@ -42,23 +43,36 @@ if __name__ == '__main__':
             await ctx.send("Welcome on board " + ctx.author.name + "!")
 
             added_courses = database.get_added_courses(student.discord_id)
-            unmanaged_courses = {database.get_course(*entry) for entry in added_courses if not database.is_managed_course(str(ctx.guild_id), *entry)}
+            unmanaged_courses = {database.get_course(*entry) for entry in added_courses if
+                                 not database.is_managed_course(str(ctx.guild_id), *entry)}
+            managed_courses = {database.get_course(*entry) for entry in added_courses if
+                               database.is_managed_course(str(ctx.guild_id), *entry)}
 
             if database.has_category(str(ctx.guild_id)):
                 random_guild_channel_id = database.random_guild_channel_id(str(ctx.guild_id))
-                random_guild_channel = next(x for x in (await ctx.guild.get_all_channels()) if x.id == random_guild_channel_id)
-                category = random_guild_channel
+                random_guild_channel = next(
+                    x for x in (await ctx.guild.get_all_channels()) if x.id == random_guild_channel_id)
+                category = random_guild_channel.parent_id
             else:
                 category = await ctx.guild.create_channel(name="uni", type=interactions.ChannelType.GUILD_CATEGORY)
 
             added_roles = Roles()
             for course in unmanaged_courses:
                 role = await ctx.guild.create_role(course.lva_name)
-                channel = await ctx.guild.create_channel(name=course.lva_name, type=interactions.ChannelType.GUILD_TEXT, parent_id=category, permission_overwrites=[
-                    interactions.Overwrite(id=str(ctx.author.id), type=1, allow=interactions.Permissions.VIEW_CHANNEL)
-                ])
+                channel = await ctx.guild.create_channel(name=course.lva_name, type=interactions.ChannelType.GUILD_TEXT,
+                                                         parent_id=category, permission_overwrites=[
+                        interactions.Overwrite(id=str(ctx.author.id), type=1,
+                                               allow=interactions.Permissions.VIEW_CHANNEL)
+                    ])
                 added_roles.add((str(ctx.guild_id), str(role.id), str(channel.id), course.lva_nr, course.semester))
             # TODO: Move create_channel out of loop into own loop and create channel / add person to channel if it already exists
+            channels = filter(lambda ch:
+                              ch.id in map(lambda c:
+                                           database.get_channel(str(ctx.guild_id), c.lva_nr, c.semester),
+                                           managed_courses),
+                              await ctx.guild.get_all_channels())
+            for channel in channels:
+                channel.permission_overwrites.append(interactions.Overwrite(id=str(ctx.author.id), type=1, allow=interactions.Permissions.VIEW_CHANNEL))
 
             database.insert(added_roles)
 
@@ -75,7 +89,8 @@ if __name__ == '__main__':
         await ctx.send("A pity to see you leave " + ctx.author.name + ". You can join the club anytime with `/kusss`!")
         courses = database.get_added_courses(user_id)
         database.delete_student(user_id)
-        roles_to_delete = {database.get_role(guild_id, course[0], course[1]) for course in courses if not database.is_needed_course(*course)}
+        roles_to_delete = {database.get_role(guild_id, course[0], course[1]) for course in courses if
+                           not database.is_needed_course(*course)}
 
         for role in roles_to_delete:
             await ctx.guild.delete_role(int(role), "Not needed anymore!")
@@ -127,16 +142,20 @@ if __name__ == '__main__':
         else:
             await ctx.send("You are not my daddy!", ephemeral=True)
 
+
     @bot.command()
     @interactions.option(description="name of the channel")
     async def test(ctx: interactions.CommandContext, name: str):
         """Create a text channel"""
         from interactions import Permissions as perms
         print(name)
-        category = await ctx.guild.create_channel(name="uni", type=interactions.ChannelType.GUILD_CATEGORY, permission_overwrites=[
-            interactions.Overwrite(id=305009439843549184, type=1, allow=perms.ATTACH_FILES | perms.VIEW_CHANNEL)
-        ])
-        channel = await ctx.guild.create_channel(name=name, type=interactions.ChannelType.GUILD_TEXT, parent_id=category.id, permission_overwrites=[])
+        category = await ctx.guild.create_channel(name="uni", type=interactions.ChannelType.GUILD_CATEGORY,
+                                                  permission_overwrites=[
+                                                      interactions.Overwrite(id=305009439843549184, type=1,
+                                                                             allow=perms.ATTACH_FILES | perms.VIEW_CHANNEL)
+                                                  ])
+        channel = await ctx.guild.create_channel(name=name, type=interactions.ChannelType.GUILD_TEXT,
+                                                 parent_id=category.id, permission_overwrites=[])
         await ctx.send(name)
 
 

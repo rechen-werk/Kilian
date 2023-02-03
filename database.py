@@ -90,6 +90,10 @@ class Database:
         result = list(self.__cur__.execute(query.select_role_by_lva, (guild_id, lva_nr, semester)))
         return result[0][0]
 
+    def get_channel(self, guild_id: str, lva_nr: str, semester: str) -> str:
+        result = list(self.__cur__.execute(query.select_channel_by_lva, (guild_id, lva_nr, semester)))
+        return result[0][0]
+
     def has_category(self, guild_id: str) -> bool:
         result = list(self.__cur__.execute(query.select_guild_channels, (guild_id,)))
         return len(result) > 0
