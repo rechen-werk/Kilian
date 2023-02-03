@@ -90,6 +90,18 @@ class Database:
         result = list(self.__cur__.execute(query.select_role_by_lva, (lva_nr, semester, guild_id)))
         return result[0][0]
 
+    def get_channel(self, guild_id: str, lva_nr: str, semester: str) -> str:
+        result = list(self.__cur__.execute(query.select_channel_by_lva, (guild_id, lva_nr, semester)))
+        return result[0][0]
+
+    def has_category(self, guild_id: str) -> bool:
+        result = list(self.__cur__.execute(query.select_guild_channels, (guild_id,)))
+        return len(result) > 0
+
+    def random_guild_channel_id(self, guild_id: str):
+        result = list(self.__cur__.execute(query.select_guild_channels, (guild_id,)))
+        return result[0][0]
+
     def get_student_ids(self):
         result = self.__cur__.execute(query.select_discord_ids)
         return {entry[0] for entry in result}

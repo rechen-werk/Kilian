@@ -13,7 +13,8 @@ import json
 
 def parse_args():
     parser = argparse.ArgumentParser()
-    parser.add_argument("-t", "--token", type=str, required=False, dest='token', help="Provide the Discord Bot Token as string.")
+    parser.add_argument("-t", "--token", type=str, required=False, dest='token',
+                        help="Provide the Discord Bot Token as string.")
     return parser.parse_args()
 
 
@@ -42,7 +43,18 @@ if __name__ == '__main__':
             await ctx.send("Welcome on board " + ctx.author.name + "!")
 
             added_courses = database.get_added_courses(student.discord_id)
-            unmanaged_courses = {database.get_course(*entry) for entry in added_courses if not database.is_managed_course(str(ctx.guild_id), *entry)}
+            unmanaged_courses = {database.get_course(*entry) for entry in added_courses if
+                                 not database.is_managed_course(str(ctx.guild_id), *entry)}
+            managed_courses = {database.get_course(*entry) for entry in added_courses if
+                               database.is_managed_course(str(ctx.guild_id), *entry)}
+
+            if database.has_category(str(ctx.guild_id)):
+                random_guild_channel_id = database.random_guild_channel_id(str(ctx.guild_id))
+                random_guild_channel = next(
+                    x for x in (await ctx.guild.get_all_channels()) if x.id == random_guild_channel_id)
+                category = random_guild_channel.parent_id
+            else:
+                category = await ctx.guild.create_channel(name="uni", type=interactions.ChannelType.GUILD_CATEGORY)
 
             unmanaged_courses_grouped = dict()
             for elem in unmanaged_courses:
@@ -53,8 +65,21 @@ if __name__ == '__main__':
             added_roles = Roles()
             for course_key in unmanaged_courses_grouped:
                 role = await ctx.guild.create_role(course_key)
+                channel = await ctx.guild.create_channel(name=course_key, type=interactions.ChannelType.GUILD_TEXT,
+                                                         parent_id=category, permission_overwrites=[
+                        interactions.Overwrite(id=str(ctx.author.id), type=1,
+                                               allow=interactions.Permissions.VIEW_CHANNEL)
+                    ])
                 for course in unmanaged_courses_grouped[course_key]:
-                    added_roles.add((course.lva_nr, course.semester, str(ctx.guild_id), str(role.id)))
+                    added_roles.add((course.lva_nr, course.semester, str(ctx.guild_id), str(role.id), str(channel.id)))
+            # FIXME: Move create_channel out of loop into own loop and create channel / add person to channel if it already exists
+            channels = filter(lambda ch:
+                              ch.id in map(lambda c:
+                                           database.get_channel(str(ctx.guild_id), c.lva_nr, c.semester),
+                                           managed_courses),
+                              await ctx.guild.get_all_channels())
+            for channel in channels:
+                channel.permission_overwrites.append(interactions.Overwrite(id=str(ctx.author.id), type=1, allow=interactions.Permissions.VIEW_CHANNEL))
 
             database.insert(added_roles)
 
@@ -122,6 +147,22 @@ if __name__ == '__main__':
             await bot._stop()
         else:
             await ctx.send("You are not my daddy!", ephemeral=True)
+
+
+    @bot.command()
+    @interactions.option(description="name of the channel")
+    async def test(ctx: interactions.CommandContext, name: str):
+        """Create a text channel"""
+        from interactions import Permissions as perms
+        print(name)
+        category = await ctx.guild.create_channel(name="uni", type=interactions.ChannelType.GUILD_CATEGORY,
+                                                  permission_overwrites=[
+                                                      interactions.Overwrite(id=305009439843549184, type=1,
+                                                                             allow=perms.ATTACH_FILES | perms.VIEW_CHANNEL)
+                                                  ])
+        channel = await ctx.guild.create_channel(name=name, type=interactions.ChannelType.GUILD_TEXT,
+                                                 parent_id=category.id, permission_overwrites=[])
+        await ctx.send(name)
 
 
     @bot.event()

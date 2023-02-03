@@ -3,7 +3,6 @@
     Author: Tobias Pilz
     This file contains all queries for database.py.
 """
-import database
 
 insert_student = "REPLACE INTO " \
                  "student(discord_id, student_id, calendar_link) " \
@@ -26,8 +25,8 @@ insert_class = "REPLACE INTO " \
                "VALUES (?,?,?,?,?)"
 
 insert_roles = "REPLACE INTO " \
-               "roles(lva_nr, semester, guild_id, role_id) " \
-               "VALUES (?,?,?,?)"
+               "roles(lva_nr, semester, guild_id, role_id, channel_id) " \
+               "VALUES (?,?,?,?,?)"
 
 delete_student = "DELETE FROM student WHERE discord_id = ?"
 
@@ -83,6 +82,7 @@ create_roles = "CREATE TABLE IF NOT EXISTS roles(" \
                "semester TEXT NOT NULL," \
                "guild_id TEXT NOT NULL," \
                "role_id TEXT NOT NULL," \
+               "channel_id TEXT NOT NULL," \
                "PRIMARY KEY (lva_nr, semester, guild_id)," \
                "FOREIGN KEY (lva_nr, semester) REFERENCES course" \
                ")"
@@ -111,17 +111,16 @@ select_role_by_lva = "SELECT role_id " \
                      "FROM roles " \
                      "WHERE (lva_nr, semester, guild_id) = (?,?,?)"
 
+select_channel_by_lva = "SELECT channel_id " \
+                        "FROM roles " \
+                        "WHERE (guild_id, lva_nr, semester) = (?,?,?)"
+
+select_guild_channels = "SELECT channel_id " \
+                        "FROM roles " \
+                        "WHERE (guild_id) = (?)"
+
 select_student_courses_by_lva = "SELECT * " \
                                 "FROM student_courses " \
                                 "WHERE (lva_nr, semester) = (?,?)"
 
 select_discord_ids = "SELECT discord_id FROM student"
-
-if __name__ == '__main__':
-    db = database.Database()
-    guild_id = "1013474125609701447"
-    role_id = "1054843641836867695"
-    if db.is_managed_role(guild_id, role_id):
-        result = db.get_role_members(guild_id, role_id)
-        for entry in result:
-            print(entry)
