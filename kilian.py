@@ -44,10 +44,17 @@ if __name__ == '__main__':
             added_courses = database.get_added_courses(student.discord_id)
             unmanaged_courses = {database.get_course(*entry) for entry in added_courses if not database.is_managed_course(str(ctx.guild_id), *entry)}
 
+            unmanaged_courses_grouped = dict()
+            for elem in unmanaged_courses:
+                if elem.lva_name not in unmanaged_courses_grouped.keys():
+                    unmanaged_courses_grouped[elem.lva_name] = set()
+                unmanaged_courses_grouped[elem.lva_name].add(elem)
+
             added_roles = Roles()
-            for course in unmanaged_courses:
-                role = await ctx.guild.create_role(course.lva_name)
-                added_roles.add((str(ctx.guild_id), str(role.id), course.lva_nr, course.semester))
+            for course_key in unmanaged_courses_grouped:
+                role = await ctx.guild.create_role(course_key)
+                for course in unmanaged_courses_grouped[course_key]:
+                    added_roles.add((course.lva_nr, course.semester, str(ctx.guild_id), str(role.id)))
 
             database.insert(added_roles)
 
@@ -64,7 +71,7 @@ if __name__ == '__main__':
         await ctx.send("A pity to see you leave " + ctx.author.name + ". You can join the club anytime with `/kusss`!")
         courses = database.get_added_courses(user_id)
         database.delete_student(user_id)
-        roles_to_delete = {database.get_role(guild_id, course[0], course[1]) for course in courses if not database.is_needed_course(*course)}
+        roles_to_delete = {database.get_role(course[0], course[1], guild_id) for course in courses if not database.is_needed_course(*course)}
 
         for role in roles_to_delete:
             await ctx.guild.delete_role(int(role), "Not needed anymore!")

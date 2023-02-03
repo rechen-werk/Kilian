@@ -26,7 +26,7 @@ insert_class = "REPLACE INTO " \
                "VALUES (?,?,?,?,?)"
 
 insert_roles = "REPLACE INTO " \
-               "roles(guild_id, role_id, lva_nr, semester) " \
+               "roles(lva_nr, semester, guild_id, role_id) " \
                "VALUES (?,?,?,?)"
 
 delete_student = "DELETE FROM student WHERE discord_id = ?"
@@ -79,11 +79,11 @@ create_class = "CREATE TABLE IF NOT EXISTS class(" \
                ")"
 
 create_roles = "CREATE TABLE IF NOT EXISTS roles(" \
-               "guild_id TEXT NOT NULL," \
-               "role_id TEXT NOT NULL," \
                "lva_nr TEXT NOT NULL," \
                "semester TEXT NOT NULL," \
-               "PRIMARY KEY (guild_id, role_id)," \
+               "guild_id TEXT NOT NULL," \
+               "role_id TEXT NOT NULL," \
+               "PRIMARY KEY (lva_nr, semester, guild_id)," \
                "FOREIGN KEY (lva_nr, semester) REFERENCES course" \
                ")"
 
@@ -109,7 +109,7 @@ select_course = "SELECT * " \
 
 select_role_by_lva = "SELECT role_id " \
                      "FROM roles " \
-                     "WHERE (guild_id, lva_nr, semester) = (?,?,?)"
+                     "WHERE (lva_nr, semester, guild_id) = (?,?,?)"
 
 select_student_courses_by_lva = "SELECT * " \
                                 "FROM student_courses " \

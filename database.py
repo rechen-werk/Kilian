@@ -67,7 +67,7 @@ class Database:
         return len(result) >= 1
 
     def is_managed_course(self, guild_id: str, lva_nr: str, semester: str) -> bool:
-        result = list(self.__cur__.execute(query.select_role_by_lva, (guild_id, lva_nr, semester)))
+        result = list(self.__cur__.execute(query.select_role_by_lva, (lva_nr, semester, guild_id)))
         return len(result) > 0
 
     def is_needed_course(self, lva_nr: str, semester: str) -> bool:
@@ -86,8 +86,8 @@ class Database:
         result = list(self.__cur__.execute(query.select_course, (lva_nr, semester)))[0]
         return Course(*result[0:4], teachers=[], link=result[4])
 
-    def get_role(self, guild_id: str, lva_nr: str, semester: str) -> str:
-        result = list(self.__cur__.execute(query.select_role_by_lva, (guild_id, lva_nr, semester)))
+    def get_role(self, lva_nr: str, semester: str, guild_id: str) -> str:
+        result = list(self.__cur__.execute(query.select_role_by_lva, (lva_nr, semester, guild_id)))
         return result[0][0]
 
     def get_student_ids(self):
