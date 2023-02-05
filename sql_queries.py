@@ -3,7 +3,6 @@
     Author: Tobias Pilz
     This file contains all queries for database.py.
 """
-import database
 
 insert_student = "REPLACE INTO " \
                  "student(discord_id, student_id, calendar_link) " \
@@ -26,8 +25,12 @@ insert_class = "REPLACE INTO " \
                "VALUES (?,?,?,?,?)"
 
 insert_roles = "REPLACE INTO " \
-               "roles(lva_nr, semester, guild_id, role_id) " \
-               "VALUES (?,?,?,?)"
+               "roles(lva_name, semester, guild_id, role_id, channel_id) " \
+               "VALUES (?,?,?,?,?)"
+
+insert_category = "REPLACE INTO " \
+                  "category(guild_id, category_id) " \
+                  "VALUES (?,?)"
 
 delete_student = "DELETE FROM student WHERE discord_id = ?"
 
@@ -79,13 +82,23 @@ create_class = "CREATE TABLE IF NOT EXISTS class(" \
                ")"
 
 create_roles = "CREATE TABLE IF NOT EXISTS roles(" \
-               "lva_nr TEXT NOT NULL," \
+               "lva_name TEXT NOT NULL," \
                "semester TEXT NOT NULL," \
                "guild_id TEXT NOT NULL," \
                "role_id TEXT NOT NULL," \
-               "PRIMARY KEY (lva_nr, semester, guild_id)," \
-               "FOREIGN KEY (lva_nr, semester) REFERENCES course" \
+               "channel_id TEXT NOT NULL," \
+               "PRIMARY KEY (lva_name, semester, guild_id)" \
                ")"
+
+create_categories = "CREATE TABLE IF NOT EXISTS category(" \
+                    "guild_id TEXT NOT NULL," \
+                    "category_id TEXT NOT NULL," \
+                    "PRIMARY KEY (guild_id)" \
+                    ")"
+
+select_category_by_guild = "SELECT category_id " \
+                           "FROM category " \
+                           "WHERE (guild_id) = (?)"
 
 select_role_by_id = "SELECT * " \
                     "FROM roles " \
@@ -93,35 +106,46 @@ select_role_by_id = "SELECT * " \
 
 select_role_students = "SELECT discord_id " \
                        "FROM student_courses " \
-                       "INNER JOIN roles r ON " \
-                       "student_courses.lva_nr = r.lva_nr " \
-                       "AND " \
-                       "student_courses.semester = r.semester " \
+                       "LEFT JOIN course " \
+                       "    USING (lva_nr, semester) " \
+                       "INNER JOIN roles " \
+                       "    USING (lva_name, semester) " \
                        "WHERE (guild_id, role_id) = (?,?)"
 
-select_student_courses = "SELECT lva_nr, semester " \
+select_student_courses = "SELECT c.* " \
                          "FROM student_courses " \
-                         "WHERE discord_id = (?)"
+                         "LEFT JOIN course c " \
+                         "  USING (lva_nr, semester) " \
+                         "WHERE (discord_id, student_courses.semester) = (?,?)"
 
 select_course = "SELECT * " \
                 "FROM course " \
                 "WHERE (lva_nr, semester) = (?,?)"
 
-select_role_by_lva = "SELECT role_id " \
-                     "FROM roles " \
-                     "WHERE (lva_nr, semester, guild_id) = (?,?,?)"
+select_channel_by_lva = "SELECT channel_id " \
+                        "FROM roles " \
+                        "WHERE (guild_id, lva_name, semester) = (?,?,?)"
 
-select_student_courses_by_lva = "SELECT * " \
-                                "FROM student_courses " \
-                                "WHERE (lva_nr, semester) = (?,?)"
+select_role_and_channel_by_lva = "SELECT role_id, channel_id " \
+                                 "FROM roles " \
+                                 "WHERE (guild_id, lva_name, semester) = (?,?,?)"
+
+select_guild_channels = "SELECT channel_id " \
+                        "FROM roles " \
+                        "WHERE (guild_id) = (?)"
+
+select_student_courses_by_lva = "SELECT sc.* " \
+                                "FROM student_courses sc " \
+                                "LEFT JOIN course " \
+                                "   USING (lva_nr, semester)" \
+                                "WHERE (lva_name, semester) = (?,?)"
 
 select_discord_ids = "SELECT discord_id FROM student"
 
-if __name__ == '__main__':
-    db = database.Database()
-    guild_id = "1013474125609701447"
-    role_id = "1054843641836867695"
-    if db.is_managed_role(guild_id, role_id):
-        result = db.get_role_members(guild_id, role_id)
-        for entry in result:
-            print(entry)
+select_student_id = "SELECT student_id " \
+                    "FROM student " \
+                    "WHERE (discord_id) = (?)"
+
+select_server_courses = "SELECT lva_name " \
+                        "FROM roles " \
+                        "WHERE (guild_id, semester) = (?,?)"
