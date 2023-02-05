@@ -37,12 +37,15 @@ class Database:
         self.__cur__.execute(query.create_course_teacher)
         self.__cur__.execute(query.create_class)
         self.__cur__.execute(query.create_roles)
+        self.__cur__.execute(query.create_categories)
 
     def insert(self, obj):
         match obj:
             case Student():
                 self.__cur__.execute(query.insert_student, obj.to_db_entry())
-                self.__cur__.executemany(query.insert_student_courses, [(obj.discord_id, course.lva_nr, course.semester) for course in obj.courses])
+                self.__cur__.executemany(
+                    query.insert_student_courses,
+                    [(obj.discord_id, course.lva_nr, course.semester) for course in obj.courses])
             case Course():
                 self.__cur__.execute(query.insert_course, obj.to_db_entry())
             case Class():
@@ -57,7 +60,7 @@ class Database:
         self.__cur__.execute(query.delete_student, (discord_id,))
         self.__con__.commit()
 
-    def delete_roles(self, guild_id: str, role_ids: {str}):
+    def delete_roles(self, guild_id: str, role_ids: set[str]):
         selection = list(zip([guild_id] * len(role_ids), role_ids))
         self.__cur__.executemany(query.delete_role, selection)
         self.__con__.commit()
@@ -66,62 +69,64 @@ class Database:
         result = list(self.__cur__.execute(query.select_role_by_id, (guild_id, role_id)))
         return len(result) >= 1
 
-    def is_managed_course(self, guild_id: str, lva_nr: str, semester: str) -> bool:
-        result = list(self.__cur__.execute(query.select_role_by_lva, (lva_nr, semester, guild_id)))
-        return len(result) > 0
+    # def is_managed_course(self, guild_id: str, lva_nr: str, semester: str) -> bool:
+    #     result = list(self.__cur__.execute(query.select_role_by_lva, (lva_nr, semester, guild_id)))
+    #     return len(result) > 0
 
-    def is_needed_course(self, lva_nr: str, semester: str) -> bool:
-        result = list(self.__cur__.execute(query.select_student_courses_by_lva, (lva_nr, semester)))
+    def is_needed_course(self, lva_name: str, semester: str) -> bool:
+        result = list(self.__cur__.execute(query.select_student_courses_by_lva, (lva_name, semester)))
         return len(result) > 0
 
     def get_role_members(self, guild_id: str, role_id: str) -> set:
         result = self.__cur__.execute(query.select_role_students, (guild_id, role_id))
         return {entry[0] for entry in result}
 
-    def get_added_courses(self, discord_id: str) -> set:
-        result = set(self.__cur__.execute(query.select_student_courses, (discord_id,)))
+    def get_added_courses(self, discord_id: str, semester: str) -> set[Course]:
+        result = {Course(*elem[0:4], teachers=[], link=elem[4])
+                  for elem in self.__cur__.execute(query.select_student_courses, (discord_id, semester))}
         return result
 
     def get_course(self, lva_nr: str, semester: str) -> Course:
         result = list(self.__cur__.execute(query.select_course, (lva_nr, semester)))[0]
         return Course(*result[0:4], teachers=[], link=result[4])
 
-    def get_role(self, lva_nr: str, semester: str, guild_id: str) -> str:
-        result = list(self.__cur__.execute(query.select_role_by_lva, (lva_nr, semester, guild_id)))
+    # def get_role(self, lva_nr: str, semester: str, guild_id: str) -> str:
+    #     result = list(self.__cur__.execute(query.select_role_by_lva, (lva_nr, semester, guild_id)))
+    #     return result[0][0]
+
+    def get_channel(self, guild_id: str, lva_name: str, semester: str) -> str:
+        result = list(self.__cur__.execute(query.select_channel_by_lva, (guild_id, lva_name, semester)))
         return result[0][0]
 
-    def get_channel(self, guild_id: str, lva_nr: str, semester: str) -> str:
-        result = list(self.__cur__.execute(query.select_channel_by_lva, (guild_id, lva_nr, semester)))
-        return result[0][0]
+    def get_role_and_channel(self, guild_id: str, lva_name: str, semester: str):
+        result = list(self.__cur__.execute(query.select_role_and_channel_by_lva, (guild_id, lva_name, semester)))
+        return result[0]
 
     def has_category(self, guild_id: str) -> bool:
-        result = list(self.__cur__.execute(query.select_guild_channels, (guild_id,)))
+        result = list(self.__cur__.execute(query.select_category_by_guild, (guild_id,)))
         return len(result) > 0
 
-    def random_guild_channel_id(self, guild_id: str):
-        result = list(self.__cur__.execute(query.select_guild_channels, (guild_id,)))
+    def get_category(self, guild_id: str):
+        result = list(self.__cur__.execute(query.select_category_by_guild, (guild_id,)))
         return result[0][0]
+
+    def set_cagegory(self, guild_id: str, category_id: str):
+        self.__cur__.execute(query.insert_category, (guild_id, category_id))
 
     def get_student_ids(self):
         result = self.__cur__.execute(query.select_discord_ids)
         return {entry[0] for entry in result}
 
+    def get_matr_nr(self, discord_id: str):
+        result = list(self.__cur__.execute(query.select_student_id, (discord_id,)))
+        if len(result) == 0:
+            return "No matriculation number saved!"
+        return result[0][0]
+
+    def get_server_courses(self, guild_id: str, semester: str):
+        result = {elem[0] for elem in self.__cur__.execute(query.select_server_courses, (guild_id, semester))}
+        return result
+
     def close(self):
         self.__cur__.close()
         self.__con__.close()
-
-
-if __name__ == "__main__":
-    db = None
-    try:
-        db = Database()
-        c1 = Course("234345", "WS22", "KV", "Course1", [], "c1.live.com")
-        c2 = Course("234346", "WS22", "KV", "Course2", [], "c2.evil.com")
-        student = Student("lel", "evil.org", {c1, c2}, "k12345678")
-        db.insert(student)  # fails because of foreign key constraint
-    except sqlite3.OperationalError as err:
-        print(f"[{err.sqlite_errorname}]\t{err.args[0]}")
-    finally:
-        if db:
-            db.close()
-        print("finished execution")

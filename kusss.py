@@ -81,13 +81,14 @@ class Course(CourseKey):
             date = cols[1].text.strip()
             times = cols[2].text.strip().split(" – ")
 
-            all_classes.add(Class(
-                lva_nr=self.lva_nr,
-                semester=self.semester,
-                start=datetime.datetime.strptime(date + times[0], '%d.%m.%y%H:%M'),
-                end=datetime.datetime.strptime(date + times[1], '%d.%m.%y%H:%M'),
-                location=cols[3].text.strip()
-            ))
+            all_classes.add(
+                Class(
+                    lva_nr=self.lva_nr,
+                    semester=self.semester,
+                    start=datetime.datetime.strptime(date + times[0], '%d.%m.%y%H:%M'),
+                    end=datetime.datetime.strptime(date + times[1], '%d.%m.%y%H:%M'),
+                    location=cols[3].text.strip()
+                ))
 
         return all_classes
 
@@ -119,20 +120,22 @@ def courses() -> set[Course]:
     """Returns a list of all Courses held at JKU in the current semester."""
     all_courses = set()
 
-    table = BeautifulSoup(requests.get("https://kusss.jku.at/kusss/coursecatalogue-search-lvas.action?").text,
-                          'html.parser').findAll("table")[5]
+    table = BeautifulSoup(
+        requests.get("https://kusss.jku.at/kusss/coursecatalogue-search-lvas.action?").text,
+        'html.parser').findAll("table")[5]
 
     for row in table.find_all("tr")[1:]:
         cols = row.findAll("td")
         names = [c.strip() for c in cols[1].text.split("\n")[2:4]]
-        all_courses.add(Course(
-            lva_nr="".join(cols[0].text.strip().split(".")),
-            semester=cols[5].text.strip(),
-            lva_type=cols[2].text.strip(),
-            lva_name=names[0] if names[1] == "" else " - ".join(names),
-            teachers=list(map(lambda elem: elem.text.strip(), cols[4].findAll("a"))),
-            link=f'www.kusss.jku.at/kusss/{cols[0].find("a")["href"].strip()}'
-        ))
+        all_courses.add(
+            Course(
+                lva_nr="".join(cols[0].text.strip().split(".")),
+                semester=cols[5].text.strip(),
+                lva_type=cols[2].text.strip(),
+                lva_name=names[0] if names[1] == "" else " - ".join(names),
+                teachers=list(map(lambda elem: elem.text.strip(), cols[4].findAll("a"))),
+                link=f'www.kusss.jku.at/kusss/{cols[0].find("a")["href"].strip()}'
+            ))
 
     return all_courses
 
@@ -167,10 +170,11 @@ def student(discord_id: str, link: str, student_id: str = None) -> Student:
 
             semester = summary[2][8:13]
             if semester == cur_sem:
-                user_courses.add(CourseKey(
-                    lva_nr=summary[2][1:7],
-                    semester=semester
-                ))
+                user_courses.add(
+                    CourseKey(
+                        lva_nr=summary[2][1:7],
+                        semester=semester
+                    ))
 
     if student_id is not None:
         student_ids = re.findall(r"(\d{8})", student_id)
@@ -188,5 +192,6 @@ def student(discord_id: str, link: str, student_id: str = None) -> Student:
 
 
 def current_semester() -> str:
-    return BeautifulSoup(requests.get("https://www.kusss.jku.at/kusss/coursecatalogue-start.action").text,
-                         'html.parser').find("option").text.strip()
+    return BeautifulSoup(
+        requests.get("https://www.kusss.jku.at/kusss/coursecatalogue-start.action").text,
+        'html.parser').find("option").text.strip()
