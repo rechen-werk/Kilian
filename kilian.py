@@ -13,7 +13,9 @@ import json
 
 def parse_args():
     parser = argparse.ArgumentParser()
-    parser.add_argument("-t", "--token", type=str, required=False, dest='token', help="Provide the Discord Bot Token as string.")
+    parser.add_argument(
+        "-t", "--token", type=str, required=False, dest='token',
+        help="Provide the Discord Bot Token as string.")
     return parser.parse_args()
 
 
@@ -36,27 +38,65 @@ if __name__ == '__main__':
     async def kusss(ctx: interactions.CommandContext, link: str, studentnumber: str = None):
         """Take advantage of the features provided by Kilian™."""
         try:
+            guild_id = str(ctx.guild_id)
+            current_semester = uni.current_semester()
             student = uni.student(str(ctx.author.id), link, studentnumber)
             database.insert(student)
 
             await ctx.send("Welcome on board " + ctx.author.name + "!")
 
-            added_courses = database.get_added_courses(student.discord_id)
-            unmanaged_courses = {database.get_course(*entry) for entry in added_courses if not database.is_managed_course(str(ctx.guild_id), *entry)}
+            guild_course_names = database.get_server_courses(guild_id, current_semester)
+            new_courses = database.get_added_courses(student.discord_id, current_semester)
+            missing_courses_by_name = dict()
+            for course in new_courses:
+                if course.lva_name in guild_course_names:
+                    continue
+                if course.lva_name not in missing_courses_by_name.keys():
+                    missing_courses_by_name[course.lva_name] = set()
+                missing_courses_by_name[course.lva_name].add(course)
 
-            unmanaged_courses_grouped = dict()
-            for elem in unmanaged_courses:
-                if elem.lva_name not in unmanaged_courses_grouped.keys():
-                    unmanaged_courses_grouped[elem.lva_name] = set()
-                unmanaged_courses_grouped[elem.lva_name].add(elem)
+            if database.has_category(guild_id):
+                category = database.get_category(guild_id)
+            else:
+                everyone_id = next(filter(lambda x: x.name == "@everyone", await ctx.guild.get_all_roles())).id
+                category = await ctx.guild.create_channel(
+                    name=uni.current_semester(), type=interactions.ChannelType.GUILD_CATEGORY,
+                    permission_overwrites=[
+                        interactions.Overwrite(
+                            id=str(everyone_id),
+                            type=0,
+                            deny=interactions.Permissions.VIEW_CHANNEL,
+                            allow=interactions.Permissions.MENTION_EVERYONE |
+                                  interactions.Permissions.USE_APPLICATION_COMMANDS
+                        )])
+                database.set_cagegory(guild_id, str(category.id))
 
             added_roles = Roles()
-            for course_key in unmanaged_courses_grouped:
-                role = await ctx.guild.create_role(course_key)
-                for course in unmanaged_courses_grouped[course_key]:
-                    added_roles.add((course.lva_nr, course.semester, str(ctx.guild_id), str(role.id)))
+            for course_name in missing_courses_by_name:
+                role = await ctx.guild.create_role(course_name)
+                channel = await ctx.guild.create_channel(
+                    name=course_name,
+                    type=interactions.ChannelType.GUILD_TEXT,
+                    parent_id=category)
+                added_roles.add((course_name, uni.current_semester(), guild_id, str(role.id), str(channel.id)))
 
             database.insert(added_roles)
+            all_channels = await ctx.guild.get_all_channels()
+            new_user_channels = set[interactions.Channel]()
+            for course in new_courses:
+                channel_id = database.get_channel(guild_id, course.lva_name, course.semester)
+                for channel in all_channels:
+                    if channel.id == channel_id:
+                        new_user_channels.add(channel)
+                        break
+
+            from interactions import Permissions as p
+            new_rule = interactions.Overwrite(
+                id=str(ctx.author.id),
+                type=1,
+                allow=p.VIEW_CHANNEL | p.READ_MESSAGE_HISTORY)
+            for channel in new_user_channels:
+                await channel.modify(permission_overwrites=channel.permission_overwrites + [new_rule])
 
         except uni.InvalidURLException as ex:
             await ctx.send(ex.message, ephemeral=True)
@@ -69,14 +109,19 @@ if __name__ == '__main__':
         guild_id = str(ctx.guild_id)
 
         await ctx.send("A pity to see you leave " + ctx.author.name + ". You can join the club anytime with `/kusss`!")
-        courses = database.get_added_courses(user_id)
+        courses = database.get_added_courses(user_id, uni.current_semester())
         database.delete_student(user_id)
-        roles_to_delete = {database.get_role(course[0], course[1], guild_id) for course in courses if not database.is_needed_course(*course)}
 
-        for role in roles_to_delete:
-            await ctx.guild.delete_role(int(role), "Not needed anymore!")
+        courses = {database.get_role_and_channel(guild_id, course.lva_name, course.semester) for course in courses}
 
-        database.delete_roles(guild_id, roles_to_delete)
+        all_guild_channels = await ctx.guild.get_all_channels()
+        channel_ids = set(map(lambda rolechannel: rolechannel[1], courses))
+        all_user_channels = set(filter(lambda c: str(c.id) in channel_ids, all_guild_channels))
+
+        for channel in all_user_channels:
+            permission_overwrites = channel.permission_overwrites
+            permission_overwrites = list(filter(lambda po: po.id != ctx.author.id, permission_overwrites))
+            await channel.modify(permission_overwrites=permission_overwrites)
 
 
     @bot.command()
@@ -90,8 +135,8 @@ if __name__ == '__main__':
         if database.is_managed_role(guild_id, role_id):
             users_with_anonymous_role = database.get_role_members(guild_id, role_id)
         else:
-            # TODO: send an ephemeral errormessage
-            return NotImplemented
+            await ctx.send("This is not a uni-role, just ping it directly!")
+            return
 
         ping_string = ""
         for user_id in users_with_anonymous_role:
@@ -108,9 +153,7 @@ if __name__ == '__main__':
     @interactions.option(description="The user you want the student id of.")
     async def studid(ctx: interactions.CommandContext, member: interactions.Member):
         """Get student id of the specified user."""
-        member_id = member.id
-        student_id = "get id"
-        await ctx.send(student_id, ephemeral=True)
+        await ctx.send(database.get_matr_nr(str(member.id)), ephemeral=True)
 
 
     @bot.command()
@@ -154,16 +197,8 @@ if __name__ == '__main__':
 
 
     @bot.event()
-    async def on_guild_create(guild: interactions.Guild):
-        known_users = [user.id for user in guild.members if user.id in database.get_student_ids()]
-
-        for user in known_users:
-            print(user)
-
-
-    @bot.event()
     async def on_start():
-        print("Good morning master!")
+        print("Good morning daddy!")
 
 
     bot.start()
