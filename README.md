@@ -13,7 +13,6 @@ But no one wants to see this wall of roles when clicking on a user so we decided
 Another advantage of letting Kilian hide the roles is that he automatically manages the roles of all users which want to see the uni-channels and we do not have to move a finger anymore. 
 
 ## Usage
-
 ### Start
 
 Use `python kilian.py` to start the bot. 
