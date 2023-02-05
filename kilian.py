@@ -38,6 +38,8 @@ if __name__ == '__main__':
     async def kusss(ctx: interactions.CommandContext, link: str, studentnumber: str = None):
         """Take advantage of the features provided by Kilian™."""
         try:
+            guild_id = str(ctx.guild_id)
+            current_semester = uni.current_semester()
             student = uni.student(str(ctx.author.id), link, studentnumber)
             database.insert(student)
 
