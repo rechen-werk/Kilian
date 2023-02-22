@@ -129,7 +129,7 @@ def courses() -> set[Course]:
         names = [c.strip() for c in cols[1].text.split("\n")[2:4]]
         all_courses.add(
             Course(
-                lva_nr="".join(cols[0].text.strip().split(".")),
+                lva_nr=cols[0].text.strip().replace(".", ""),
                 semester=cols[5].text.strip(),
                 lva_type=cols[2].text.strip(),
                 lva_name=names[0] if names[1] == "" else " - ".join(names),
