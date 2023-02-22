@@ -45,7 +45,7 @@ class Database:
                 self.__cur__.execute(query.insert_student, obj.to_db_entry())
                 self.__cur__.executemany(
                     query.insert_student_courses,
-                    [(obj.discord_id, course.lva_nr, course.semester) for course in obj.courses])
+                    [(obj.discord_id, course.lva_nr, course.semester, 1) for course in obj.courses])
             case Course():
                 self.__cur__.execute(query.insert_course, obj.to_db_entry())
             case Class():
@@ -126,6 +126,10 @@ class Database:
     def get_server_courses(self, guild_id: str, semester: str):
         result = {elem[0] for elem in self.__cur__.execute(query.select_server_courses, (guild_id, semester))}
         return result
+
+    def is_active(self, discord_id: str, lva_nr: str, semester: str):
+        result = list(self.__cur__.execute(query.select_active, (discord_id, lva_nr, semester)))
+        return result[0]
 
     def close(self):
         self.__cur__.close()

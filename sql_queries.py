@@ -13,8 +13,8 @@ insert_course = "REPLACE INTO " \
                 "VALUES (?,?,?,?,?)"
 
 insert_student_courses = "REPLACE INTO " \
-                         "student_courses(discord_id, lva_nr, semester) " \
-                         "VALUES (?,?,?)"
+                         "student_courses(discord_id, lva_nr, semester, active) " \
+                         "VALUES (?,?,?,?)"
 
 insert_course_teacher = "REPLACE INTO " \
                         "course_teacher(teacher_name, semester, lva_nr) " \
@@ -56,6 +56,7 @@ create_student_courses = "CREATE TABLE IF NOT EXISTS student_courses(" \
                          "discord_id TEXT NOT NULL, " \
                          "semester TEXT NOT NULL, " \
                          "lva_nr TEXT NOT NULL, " \
+                         "active INTEGER NOT NULL, " \
                          "PRIMARY KEY (discord_id, semester, lva_nr)," \
                          "CONSTRAINT fk_student" \
                          "  FOREIGN KEY (discord_id) REFERENCES student" \
@@ -149,3 +150,7 @@ select_student_id = "SELECT student_id " \
 select_server_courses = "SELECT lva_name " \
                         "FROM roles " \
                         "WHERE (guild_id, semester) = (?,?)"
+
+select_active = "SELECT active " \
+                "FROM student_courses " \
+                "WHERE (discord_id, lva_nr, semester) = (?,?,?)"
