@@ -16,6 +16,17 @@ class Roles(set):
     pass
 
 
+class StudentCourse:
+    def __init__(self, discord_id, semester, lva_nr, active):
+        self.discord_id = discord_id
+        self.semester = semester
+        self.lva_nr = lva_nr
+        self.active = active
+
+    def to_db_entry(self) -> tuple:
+        return self.discord_id, self.lva_nr, self.semester, self.active
+
+
 class Database:
     def __init__(self):
         self.__con__ = sqlite3.connect(__DB__)
@@ -52,6 +63,8 @@ class Database:
                 self.__cur__.execute(query.insert_class, obj.to_db_entry())
             case Roles():
                 self.__cur__.executemany(query.insert_roles, obj)
+            case StudentCourse():
+                self.__cur__.execute(query.insert_student_courses, obj.to_db_entry())
             case _:
                 return NotImplemented
         self.__con__.commit()
@@ -78,7 +91,7 @@ class Database:
         return len(result) > 0
 
     def get_role_members(self, guild_id: str, role_id: str) -> set:
-        result = self.__cur__.execute(query.select_role_students, (guild_id, role_id))
+        result = self.__cur__.execute(query.select_role_active_students, (guild_id, role_id))
         return {entry[0] for entry in result}
 
     def get_added_courses(self, discord_id: str, semester: str) -> set[Course]:
@@ -129,7 +142,24 @@ class Database:
 
     def is_active(self, discord_id: str, lva_nr: str, semester: str):
         result = list(self.__cur__.execute(query.select_active, (discord_id, lva_nr, semester)))
-        return result[0]
+        return result[0][0]
+
+    def get_lva_nr(self, lva_name: str, semester: str):
+        result = list(self.__cur__.execute(query.select_lva_nr, (lva_name, semester)))
+        result.sort()
+        return result[0][0]
+
+    def get_lva_name(self, semester: str, guild_id: str, role_id: str):
+        result = list(self.__cur__.execute(query.select_lva_name, (semester, guild_id, role_id)))
+        return result[0][0]
+
+    def get_channel_id(self, guild_id: str, role_id: str):
+        result = list(self.__cur__.execute(query.select_channel_id, (guild_id, role_id)))
+        return result[0][0]
+
+    def student_has_course(self, discord_id: str, semester: str, lva_nr: str):
+        result = list(self.__cur__.execute(query.select_student_courses_by_id, (discord_id, semester, lva_nr)))
+        return len(result) > 0
 
     def close(self):
         self.__cur__.close()

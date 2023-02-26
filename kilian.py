@@ -7,7 +7,7 @@
 import argparse
 import interactions
 import kusss as uni
-from database import Database, Roles
+from database import Database, Roles, StudentCourse
 import json
 
 
@@ -154,6 +154,41 @@ if __name__ == '__main__':
     async def studid(ctx: interactions.CommandContext, member: interactions.Member):
         """Get student id of the specified user."""
         await ctx.send(database.get_matr_nr(str(member.id)), ephemeral=True)
+
+    @bot.command()
+    @interactions.option(description="Course chat you want to join.")
+    async def join(ctx: interactions.CommandContext, course: interactions.Role):
+        """Join a course chat."""
+
+        role_id = str(course.id)
+        guild_id = str(ctx.guild_id)
+
+        if not database.is_managed_role(guild_id, role_id):
+            await ctx.send("This course does not exist!")
+            return
+
+        discord_id = str(ctx.author.id)
+        semester = uni.current_semester()
+        lva_name = database.get_lva_name(semester, guild_id, role_id)
+        lva_nr = database.get_lva_nr(lva_name, semester)
+
+        if database.student_has_course(discord_id, semester, lva_nr):
+            await ctx.send("Already joined the course chat.")
+            return
+
+        database.insert(StudentCourse(discord_id, semester, lva_nr, 0))
+
+        channel_id = database.get_channel_id(guild_id, role_id)
+
+        from interactions import Permissions as p
+        new_rule = interactions.Overwrite(
+            id=str(ctx.author.id),
+            type=1,
+            allow=p.VIEW_CHANNEL | p.READ_MESSAGE_HISTORY)
+        channel = await interactions.get(bot, interactions.Channel, object_id=channel_id)
+        await channel.modify(permission_overwrites=channel.permission_overwrites + [new_rule])
+
+        await ctx.send(f"Welcome to {lva_name}, {ctx.author.name}.")
 
 
     @bot.command()

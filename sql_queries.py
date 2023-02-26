@@ -105,13 +105,13 @@ select_role_by_id = "SELECT * " \
                     "FROM roles " \
                     "WHERE (guild_id, role_id) = (?,?)"
 
-select_role_students = "SELECT discord_id " \
-                       "FROM student_courses " \
-                       "LEFT JOIN course " \
-                       "    USING (lva_nr, semester) " \
-                       "INNER JOIN roles " \
-                       "    USING (lva_name, semester) " \
-                       "WHERE (guild_id, role_id) = (?,?)"
+select_role_active_students = "SELECT discord_id " \
+                              "FROM student_courses " \
+                              "LEFT JOIN course " \
+                              "    USING (lva_nr, semester) " \
+                              "INNER JOIN roles " \
+                              "    USING (lva_name, semester) " \
+                              "WHERE (guild_id, role_id, active) = (?,?,1)"
 
 select_student_courses = "SELECT c.* " \
                          "FROM student_courses " \
@@ -154,3 +154,20 @@ select_server_courses = "SELECT lva_name " \
 select_active = "SELECT active " \
                 "FROM student_courses " \
                 "WHERE (discord_id, lva_nr, semester) = (?,?,?)"
+
+select_lva_nr = "SELECT lva_nr " \
+                "FROM course " \
+                "WHERE (lva_name, semester) = (?,?)"
+
+
+select_lva_name = "SELECT lva_name " \
+                  "FROM roles " \
+                  "WHERE (semester, guild_id, role_id) = (?,?,?)"
+
+select_channel_id = "SELECT channel_id " \
+                    "FROM roles " \
+                    "WHERE (guild_id, role_id) = (?,?)"
+
+select_student_courses_by_id = "SELECT lva_nr " \
+                               "FROM student_courses " \
+                               "WHERE (discord_id, semester, lva_nr) = (?,?,?)"
