@@ -172,7 +172,7 @@ if __name__ == '__main__':
         lva_name = database.get_lva_name(semester, guild_id, role_id)
         lva_nr = database.get_lva_nr(lva_name, semester)
 
-        if database.student_has_course(discord_id, semester, lva_nr):
+        if database.student_has_course(discord_id, semester, lva_name):
             await ctx.send("Already joined the course chat.")
             return
 

@@ -157,8 +157,9 @@ class Database:
         result = list(self.__cur__.execute(query.select_channel_id, (guild_id, role_id)))
         return result[0][0]
 
-    def student_has_course(self, discord_id: str, semester: str, lva_nr: str):
-        result = list(self.__cur__.execute(query.select_student_courses_by_id, (discord_id, semester, lva_nr)))
+    def student_has_course(self, discord_id: str, semester: str, lva_name: str):
+        result = list(self.__cur__.execute(query.select_student_courses_by_id, (discord_id, semester, lva_name)))
+        print(len(result))
         return len(result) > 0
 
     def close(self):

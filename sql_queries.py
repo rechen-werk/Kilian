@@ -168,6 +168,8 @@ select_channel_id = "SELECT channel_id " \
                     "FROM roles " \
                     "WHERE (guild_id, role_id) = (?,?)"
 
-select_student_courses_by_id = "SELECT lva_nr " \
-                               "FROM student_courses " \
-                               "WHERE (discord_id, semester, lva_nr) = (?,?,?)"
+select_student_courses_by_id = "SELECT sc.lva_nr " \
+                               "FROM student_courses as sc LEFT JOIN course as c " \
+                               "WHERE sc.lva_nr = c.lva_nr " \
+                               "AND sc.semester = c.semester " \
+                               "AND (discord_id, sc.semester,lva_name) = (?,?,?)"
