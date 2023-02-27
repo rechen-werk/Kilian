@@ -69,6 +69,10 @@ class Database:
                 return NotImplemented
         self.__con__.commit()
 
+    def toggle_active(self, active: int, discord_id: str, lva_nr: str, semester: str):
+        self.__cur__.execute(query.toggle_active, (active, discord_id, lva_nr, semester))
+        self.__con__.commit()
+
     def delete_student(self, discord_id: str):
         self.__cur__.execute(query.delete_student, (discord_id,))
         self.__con__.commit()
@@ -95,7 +99,7 @@ class Database:
         return len(result) > 0
 
     def get_role_members(self, guild_id: str, role_id: str) -> set:
-        result = self.__cur__.execute(query.select_role_active_students, (guild_id, role_id))
+        result = self.__cur__.execute(query.select_role_students, (guild_id, role_id))
         return {entry[0] for entry in result}
 
     def get_added_courses(self, discord_id: str, semester: str) -> set[Course]:
@@ -146,7 +150,11 @@ class Database:
 
     def is_active(self, discord_id: str, lva_nr: str, semester: str):
         result = list(self.__cur__.execute(query.select_active, (discord_id, lva_nr, semester)))
-        return result[0][0]
+        return len(result) > 0 and result[0][0]
+
+    def has_course(self, discord_id: str, lva_nr: str, semester: str):
+        result = list(self.__cur__.execute(query.select_active, (discord_id, lva_nr, semester)))
+        return len(result) > 0
 
     def get_lva_nr(self, lva_name: str, semester: str):
         result = list(self.__cur__.execute(query.select_lva_nr, (lva_name, semester)))
@@ -154,7 +162,7 @@ class Database:
         return result[0][0]
 
     def get_lva_nrs(self, lva_name: str, semester: str):
-        result = map(lambda it: it[0], set(self.__cur__.execute(query.select_lva_nr, (lva_name, semester))))
+        result = set(map(lambda it: it[0], set(self.__cur__.execute(query.select_lva_nr, (lva_name, semester)))))
         return result
 
     def get_lva_name_by_role_id(self, semester: str, guild_id: str, role_id: str):
@@ -179,7 +187,6 @@ class Database:
 
     def student_has_course(self, discord_id: str, semester: str, lva_name: str):
         result = list(self.__cur__.execute(query.select_student_courses_by_id, (discord_id, semester, lva_name)))
-        print(len(result))
         return len(result) > 0
 
     def get_link(self, discord_id: str):

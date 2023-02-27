@@ -32,6 +32,10 @@ insert_category = "REPLACE INTO " \
                   "category(guild_id, category_id) " \
                   "VALUES (?,?)"
 
+toggle_active = "UPDATE student_courses " \
+                "SET (active) = (?) " \
+                "WHERE (discord_id, lva_nr, semester) = (?,?,?)"
+
 delete_student = "DELETE FROM student WHERE discord_id = ?"
 
 delete_role = "DELETE FROM roles WHERE (guild_id, role_id) = (?,?)"
@@ -107,13 +111,14 @@ select_role_by_id = "SELECT * " \
                     "FROM roles " \
                     "WHERE (guild_id, role_id) = (?,?)"
 
-select_role_active_students = "SELECT discord_id " \
-                              "FROM student_courses " \
-                              "LEFT JOIN course " \
-                              "    USING (lva_nr, semester) " \
-                              "INNER JOIN roles " \
-                              "    USING (lva_name, semester) " \
-                              "WHERE (guild_id, role_id, active) = (?,?,1)"
+select_role_students = "SELECT discord_id " \
+                       "FROM student_courses " \
+                       "LEFT JOIN course " \
+                       "    USING (lva_nr, semester) " \
+                       "INNER JOIN roles " \
+                       "    USING (lva_name, semester) " \
+                       "WHERE (guild_id, role_id) = (?,?) " \
+                       "AND active = 1"
 
 select_student_courses = "SELECT c.* " \
                          "FROM student_courses " \
@@ -161,10 +166,9 @@ select_lva_nr = "SELECT lva_nr " \
                 "FROM course " \
                 "WHERE (lva_name, semester) = (?,?)"
 
-
 select_lva_name_by_role_id = "SELECT lva_name " \
-                  "FROM roles " \
-                  "WHERE (semester, guild_id, role_id) = (?,?,?)"
+                             "FROM roles " \
+                             "WHERE (semester, guild_id, role_id) = (?,?,?)"
 
 select_lva_name_by_channel_id = "SELECT lva_name " \
                                 "FROM roles " \
@@ -188,6 +192,6 @@ is_managed_channel = "SELECT roles.* " \
                      "FROM roles " \
                      "WHERE channel_id = ?"
 
-select_link = "SELECT link " \
+select_link = "SELECT calendar_link " \
               "FROM student " \
               "WHERE discord_id = ?"

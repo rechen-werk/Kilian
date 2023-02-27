@@ -143,7 +143,10 @@ if __name__ == '__main__':
             user = (await ctx.guild.get_member(int(user_id))).user
             ping_string += user.mention
 
-        await ctx.send(ping_string + "\n" + content)
+        if len(ping_string) > 0:
+            await ctx.send(ping_string + "\n" + content)
+        else:
+            await ctx.send("Nobody to ping", ephemeral=True)
 
         # POSSIBLE ERROR: too many users, so that not all pings fit in one message
         # POSSIBLE SOLUTION TO ERROR: multiple messages
@@ -154,6 +157,7 @@ if __name__ == '__main__':
     async def studid(ctx: interactions.CommandContext, member: interactions.Member):
         """Get student id of the specified user."""
         await ctx.send(database.get_matr_nr(str(member.id)), ephemeral=True)
+
 
     @bot.command()
     @interactions.option(description="Course chat you want to join.")
@@ -202,6 +206,7 @@ if __name__ == '__main__':
 
         await ctx.send(f"Welcome to {lva_name}, {ctx.author.name}.", ephemeral=True)
 
+
     @bot.command()
     async def leave(ctx: interactions.CommandContext):
         """Leave this channel."""
@@ -215,7 +220,7 @@ if __name__ == '__main__':
             return
 
         lva_name = database.get_lva_name_by_channel_id(semester, guild_id, channel_id)
-        lva_nr = database.get_lva_nr(lva_name, semester)
+        lva_nrs = database.get_lva_nrs(lva_name, semester)
 
         await ctx.send(f"{ctx.author.name} left the channel.", ephemeral=True)
 
@@ -224,8 +229,42 @@ if __name__ == '__main__':
         permission_overwrites = list(filter(lambda po: po.id != ctx.author.id, permission_overwrites))
         await channel.modify(permission_overwrites=permission_overwrites)
 
-        database.delete_student_role(discord_id, lva_nr, semester)
+        for lva_nr in lva_nrs:
+            database.delete_student_role(discord_id, lva_nr, semester)
 
+
+    @bot.command()
+    async def toggleping(ctx: interactions.CommandContext):
+        discord_id = str(ctx.author.id)
+        guild_id = str(ctx.guild.id)
+        semester = uni.current_semester()
+        channel_id = str(ctx.channel.id)
+
+        if not database.is_managed_channel(channel_id):
+            await ctx.send("Cannot disable pings non-uni channels.", ephemeral=True)
+            return
+
+        lva_name = database.get_lva_name_by_channel_id(semester, guild_id, channel_id)
+        lva_nrs = database.get_lva_nrs(lva_name, semester)
+
+        change = False
+        now_active = False
+        for lva_nr in lva_nrs:
+            if database.has_course(discord_id, lva_nr, semester):
+                if database.is_active(discord_id, lva_nr, semester):
+                    database.toggle_active(0, discord_id, lva_nr, semester)
+                    change = True
+                    now_active = False
+                else:
+                    database.toggle_active(1, discord_id, lva_nr, semester)
+                    change = True
+                    now_active = True
+
+        if change:
+            if now_active:
+                await ctx.send("You will now be pinged.", ephemeral=True)
+            else:
+                await ctx.send("You will no longer be pinged.", ephemeral=True)
 
 
     @bot.command()
@@ -265,7 +304,8 @@ if __name__ == '__main__':
             user = (await guild.get_member(int(user_id))).user
             ping_string += user.mention
 
-        await message.reply(ping_string)
+        if len(ping_string) > 0:
+            await message.reply(ping_string)
 
 
     @bot.event()
