@@ -153,6 +153,10 @@ class Database:
         result.sort()
         return result[0][0]
 
+    def get_lva_nrs(self, lva_name: str, semester: str):
+        result = map(lambda it: it[0], set(self.__cur__.execute(query.select_lva_nr, (lva_name, semester))))
+        return result
+
     def get_lva_name_by_role_id(self, semester: str, guild_id: str, role_id: str):
         result = list(self.__cur__.execute(query.select_lva_name_by_role_id, (semester, guild_id, role_id)))
         return result[0][0]
