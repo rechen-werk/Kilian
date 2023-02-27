@@ -86,7 +86,6 @@ Don't worry about those error messages, they are from the [`interactions.py`](ht
   * Use more bots at the same time as "creating-slaves" to get rid of discord blocking the bot.
   * Deleting unused roles and channels on `/unkusss`
   * Add an "Archivesniffer"-Role to give people permissions to view older channels
-  * Add a "Veteran"-Role to give people permissions to get into channels and help others
   * `/studygroup`: Create a private voicechannel for - hmm.. well - studygroups
   * `/hiderole <@Role>`: Hide a already existent role and provide Kilians standard features for it
   * `/showrole <@Role>`: Reverse `/hiderole`
