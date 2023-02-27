@@ -55,6 +55,7 @@ Requirements are listed and can be installed with `pip install -r requirements.t
 Get a working discord bot: 
   * Follow [this guide](https://discordpy.readthedocs.io/en/stable/discord.html) to get your bot 
   * Set all "Priviledged Gateway Intents" to true
+  * Important note: Select `bot` and `applications.commands` as scope
   * Add the bot to your server with "Administrator" permissions
   * Reset and copy your bot token!
 
