@@ -159,21 +159,24 @@ if __name__ == '__main__':
     @interactions.option(description="Course chat you want to join.")
     async def join(ctx: interactions.CommandContext, course: interactions.Role):
         """Join a course chat."""
-
         role_id = str(course.id)
         guild_id = str(ctx.guild_id)
 
+        if not database.is_kusss(str(ctx.author.id)):
+            await ctx.send("You have to be subscribed to Kilian services to use Kilian features.", ephemeral=True)
+            return
+
         if not database.is_managed_role(guild_id, role_id):
-            await ctx.send("This course does not exist!")
+            await ctx.send("This course does not exist!", ephemeral=True)
             return
 
         discord_id = str(ctx.author.id)
         semester = uni.current_semester()
-        lva_name = database.get_lva_name(semester, guild_id, role_id)
+        lva_name = database.get_lva_name_by_role_id(semester, guild_id, role_id)
         lva_nr = database.get_lva_nr(lva_name, semester)
 
         if database.student_has_course(discord_id, semester, lva_name):
-            await ctx.send("Already joined the course chat.")
+            await ctx.send("Already joined the course chat.", ephemeral=True)
             return
 
         database.insert(StudentCourse(discord_id, semester, lva_nr, 0))
@@ -188,7 +191,32 @@ if __name__ == '__main__':
         channel = await interactions.get(bot, interactions.Channel, object_id=channel_id)
         await channel.modify(permission_overwrites=channel.permission_overwrites + [new_rule])
 
-        await ctx.send(f"Welcome to {lva_name}, {ctx.author.name}.")
+        await ctx.send(f"Welcome to {lva_name}, {ctx.author.name}.", ephemeral=True)
+
+    @bot.command()
+    async def leave(ctx: interactions.CommandContext):
+        """Leave this channel."""
+        guild_id = str(ctx.guild_id)
+        discord_id = str(ctx.author.id)
+        semester = uni.current_semester()
+        channel_id = str(ctx.channel_id)
+
+        if not database.is_managed_channel(channel_id):
+            await ctx.send("Cannot leave non-uni channels.", ephemeral=True)
+            return
+
+        lva_name = database.get_lva_name_by_channel_id(semester, guild_id, channel_id)
+        lva_nr = database.get_lva_nr(lva_name, semester)
+
+        await ctx.send(f"{ctx.author.name} left the channel.", ephemeral=True)
+
+        channel = ctx.channel
+        permission_overwrites = channel.permission_overwrites
+        permission_overwrites = list(filter(lambda po: po.id != ctx.author.id, permission_overwrites))
+        await channel.modify(permission_overwrites=permission_overwrites)
+
+        database.delete_student_role(discord_id, lva_nr, semester)
+
 
 
     @bot.command()

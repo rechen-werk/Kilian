@@ -36,6 +36,8 @@ delete_student = "DELETE FROM student WHERE discord_id = ?"
 
 delete_role = "DELETE FROM roles WHERE (guild_id, role_id) = (?,?)"
 
+delete_student_course = "DELETE FROM student_courses WHERE (discord_id, lva_nr, semester) = (?,?,?)"
+
 create_student = "CREATE TABLE IF NOT EXISTS student(" \
                  "discord_id TEXT NOT NULL, " \
                  "student_id TEXT, " \
@@ -160,9 +162,13 @@ select_lva_nr = "SELECT lva_nr " \
                 "WHERE (lva_name, semester) = (?,?)"
 
 
-select_lva_name = "SELECT lva_name " \
+select_lva_name_by_role_id = "SELECT lva_name " \
                   "FROM roles " \
                   "WHERE (semester, guild_id, role_id) = (?,?,?)"
+
+select_lva_name_by_channel_id = "SELECT lva_name " \
+                                "FROM roles " \
+                                "WHERE (semester, guild_id, channel_id) = (?,?,?)"
 
 select_channel_id = "SELECT channel_id " \
                     "FROM roles " \
@@ -173,3 +179,11 @@ select_student_courses_by_id = "SELECT sc.lva_nr " \
                                "WHERE sc.lva_nr = c.lva_nr " \
                                "AND sc.semester = c.semester " \
                                "AND (discord_id, sc.semester,lva_name) = (?,?,?)"
+
+is_kusss = "SELECT student.* " \
+           "FROM student " \
+           "WHERE discord_id = ?"
+
+is_managed_channel = "SELECT roles.* " \
+                     "FROM roles " \
+                     "WHERE channel_id = ?"

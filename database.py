@@ -78,6 +78,10 @@ class Database:
         self.__cur__.executemany(query.delete_role, selection)
         self.__con__.commit()
 
+    def delete_student_role(self, discord_id: str, lva_nr: str, semester: str):
+        self.__cur__.execute(query.delete_student_course, (discord_id, lva_nr, semester))
+        self.__con__.commit()
+
     def is_managed_role(self, guild_id: str, role_id: str) -> bool:
         result = list(self.__cur__.execute(query.select_role_by_id, (guild_id, role_id)))
         return len(result) >= 1
@@ -149,9 +153,21 @@ class Database:
         result.sort()
         return result[0][0]
 
-    def get_lva_name(self, semester: str, guild_id: str, role_id: str):
-        result = list(self.__cur__.execute(query.select_lva_name, (semester, guild_id, role_id)))
+    def get_lva_name_by_role_id(self, semester: str, guild_id: str, role_id: str):
+        result = list(self.__cur__.execute(query.select_lva_name_by_role_id, (semester, guild_id, role_id)))
         return result[0][0]
+
+    def get_lva_name_by_channel_id(self, semester: str, guild_id: str, channel_id: str):
+        result = list(self.__cur__.execute(query.select_lva_name_by_channel_id, (semester, guild_id, channel_id)))
+        return result[0][0]
+
+    def is_kusss(self, discord_id: str):
+        result = list(self.__cur__.execute(query.is_kusss, (discord_id,)))
+        return len(result) > 0
+
+    def is_managed_channel(self, channel_id):
+        result = list(self.__cur__.execute(query.is_managed_channel, (channel_id,)))
+        return len(result) > 0
 
     def get_channel_id(self, guild_id: str, role_id: str):
         result = list(self.__cur__.execute(query.select_channel_id, (guild_id, role_id)))
