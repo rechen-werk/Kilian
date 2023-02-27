@@ -187,3 +187,7 @@ is_kusss = "SELECT student.* " \
 is_managed_channel = "SELECT roles.* " \
                      "FROM roles " \
                      "WHERE channel_id = ?"
+
+select_link = "SELECT link " \
+              "FROM student " \
+              "WHERE discord_id = ?"

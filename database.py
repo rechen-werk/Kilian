@@ -178,6 +178,10 @@ class Database:
         print(len(result))
         return len(result) > 0
 
+    def get_link(self, discord_id: str):
+        result = list(self.__cur__.execute(query.select_link, (discord_id,)))
+        return result[0][0]
+
     def close(self):
         self.__cur__.close()
         self.__con__.close()

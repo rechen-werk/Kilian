@@ -179,6 +179,11 @@ if __name__ == '__main__':
             await ctx.send("Already joined the course chat.", ephemeral=True)
             return
 
+        link = database.get_link(discord_id)
+        student = uni.student(discord_id, link)
+        courses = student.courses
+        lva_nrs = map(lambda c: c.lva_nr, courses)
+
         database.insert(StudentCourse(discord_id, semester, lva_nr, 0))
 
         channel_id = database.get_channel_id(guild_id, role_id)
