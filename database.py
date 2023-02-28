@@ -17,7 +17,7 @@ class Roles(set):
 
 
 class StudentCourse:
-    def __init__(self, discord_id, semester, lva_nr, active):
+    def __init__(self, discord_id: str, semester: str, lva_nr: str, active: bool):
         self.discord_id = discord_id
         self.semester = semester
         self.lva_nr = lva_nr
@@ -56,7 +56,7 @@ class Database:
                 self.__cur__.execute(query.insert_student, obj.to_db_entry())
                 self.__cur__.executemany(
                     query.insert_student_courses,
-                    [(obj.discord_id, course.lva_nr, course.semester, 1) for course in obj.courses])
+                    [(obj.discord_id, course.lva_nr, course.semester, True) for course in obj.courses])
             case Course():
                 self.__cur__.execute(query.insert_course, obj.to_db_entry())
             case Class():
@@ -69,7 +69,7 @@ class Database:
                 return NotImplemented
         self.__con__.commit()
 
-    def toggle_active(self, active: int, discord_id: str, lva_nr: str, semester: str):
+    def toggle_active(self, active: bool, discord_id: str, lva_nr: str, semester: str):
         self.__cur__.execute(query.toggle_active, (active, discord_id, lva_nr, semester))
         self.__con__.commit()
 

@@ -62,7 +62,7 @@ create_student_courses = "CREATE TABLE IF NOT EXISTS student_courses(" \
                          "discord_id TEXT NOT NULL, " \
                          "semester TEXT NOT NULL, " \
                          "lva_nr TEXT NOT NULL, " \
-                         "active INTEGER NOT NULL, " \
+                         "active BOOLEAN NOT NULL, " \
                          "PRIMARY KEY (discord_id, semester, lva_nr)," \
                          "CONSTRAINT fk_student" \
                          "  FOREIGN KEY (discord_id) REFERENCES student" \
@@ -118,7 +118,7 @@ select_role_students = "SELECT discord_id " \
                        "INNER JOIN roles " \
                        "    USING (lva_name, semester) " \
                        "WHERE (guild_id, role_id) = (?,?) " \
-                       "AND active = 1"
+                       "AND active = TRUE"
 
 select_student_courses = "SELECT c.* " \
                          "FROM student_courses " \

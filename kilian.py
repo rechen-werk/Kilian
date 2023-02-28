@@ -190,9 +190,10 @@ if __name__ == '__main__':
         intersection = student_lva_nrs & course_lva_nrs
 
         if len(intersection) > 0:
-            database.insert(StudentCourse(discord_id, semester, lva_nr, 1))
+            for lva_nr_runner in intersection:
+                database.insert(StudentCourse(discord_id, semester, lva_nr_runner, True))
         else:
-            database.insert(StudentCourse(discord_id, semester, lva_nr, 0))
+            database.insert(StudentCourse(discord_id, semester, lva_nr, False))
 
         channel_id = database.get_channel_id(guild_id, role_id)
 
@@ -252,11 +253,11 @@ if __name__ == '__main__':
         for lva_nr in lva_nrs:
             if database.has_course(discord_id, lva_nr, semester):
                 if database.is_active(discord_id, lva_nr, semester):
-                    database.toggle_active(0, discord_id, lva_nr, semester)
+                    database.toggle_active(False, discord_id, lva_nr, semester)
                     change = True
                     now_active = False
                 else:
-                    database.toggle_active(1, discord_id, lva_nr, semester)
+                    database.toggle_active(True, discord_id, lva_nr, semester)
                     change = True
                     now_active = True
 
