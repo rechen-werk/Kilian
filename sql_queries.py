@@ -13,8 +13,8 @@ insert_course = "REPLACE INTO " \
                 "VALUES (?,?,?,?,?)"
 
 insert_student_courses = "REPLACE INTO " \
-                         "student_courses(discord_id, lva_nr, semester) " \
-                         "VALUES (?,?,?)"
+                         "student_courses(discord_id, lva_nr, semester, active) " \
+                         "VALUES (?,?,?,?)"
 
 insert_course_teacher = "REPLACE INTO " \
                         "course_teacher(teacher_name, semester, lva_nr) " \
@@ -32,9 +32,15 @@ insert_category = "REPLACE INTO " \
                   "category(guild_id, category_id) " \
                   "VALUES (?,?)"
 
+toggle_active = "UPDATE student_courses " \
+                "SET (active) = (?) " \
+                "WHERE (discord_id, lva_nr, semester) = (?,?,?)"
+
 delete_student = "DELETE FROM student WHERE discord_id = ?"
 
 delete_role = "DELETE FROM roles WHERE (guild_id, role_id) = (?,?)"
+
+delete_student_course = "DELETE FROM student_courses WHERE (discord_id, lva_nr, semester) = (?,?,?)"
 
 create_student = "CREATE TABLE IF NOT EXISTS student(" \
                  "discord_id TEXT NOT NULL, " \
@@ -56,6 +62,7 @@ create_student_courses = "CREATE TABLE IF NOT EXISTS student_courses(" \
                          "discord_id TEXT NOT NULL, " \
                          "semester TEXT NOT NULL, " \
                          "lva_nr TEXT NOT NULL, " \
+                         "active BOOLEAN NOT NULL, " \
                          "PRIMARY KEY (discord_id, semester, lva_nr)," \
                          "CONSTRAINT fk_student" \
                          "  FOREIGN KEY (discord_id) REFERENCES student" \
@@ -110,7 +117,8 @@ select_role_students = "SELECT discord_id " \
                        "    USING (lva_nr, semester) " \
                        "INNER JOIN roles " \
                        "    USING (lva_name, semester) " \
-                       "WHERE (guild_id, role_id) = (?,?)"
+                       "WHERE (guild_id, role_id) = (?,?) " \
+                       "AND active = TRUE"
 
 select_student_courses = "SELECT c.* " \
                          "FROM student_courses " \
@@ -149,3 +157,41 @@ select_student_id = "SELECT student_id " \
 select_server_courses = "SELECT lva_name " \
                         "FROM roles " \
                         "WHERE (guild_id, semester) = (?,?)"
+
+select_active = "SELECT active " \
+                "FROM student_courses " \
+                "WHERE (discord_id, lva_nr, semester) = (?,?,?)"
+
+select_lva_nr = "SELECT lva_nr " \
+                "FROM course " \
+                "WHERE (lva_name, semester) = (?,?)"
+
+select_lva_name_by_role_id = "SELECT lva_name " \
+                             "FROM roles " \
+                             "WHERE (semester, guild_id, role_id) = (?,?,?)"
+
+select_lva_name_by_channel_id = "SELECT lva_name " \
+                                "FROM roles " \
+                                "WHERE (semester, guild_id, channel_id) = (?,?,?)"
+
+select_channel_id = "SELECT channel_id " \
+                    "FROM roles " \
+                    "WHERE (guild_id, role_id) = (?,?)"
+
+select_student_courses_by_id = "SELECT sc.lva_nr " \
+                               "FROM student_courses as sc LEFT JOIN course as c " \
+                               "WHERE sc.lva_nr = c.lva_nr " \
+                               "AND sc.semester = c.semester " \
+                               "AND (discord_id, sc.semester,lva_name) = (?,?,?)"
+
+is_kusss = "SELECT student.* " \
+           "FROM student " \
+           "WHERE discord_id = ?"
+
+is_managed_channel = "SELECT roles.* " \
+                     "FROM roles " \
+                     "WHERE channel_id = ?"
+
+select_link = "SELECT calendar_link " \
+              "FROM student " \
+              "WHERE discord_id = ?"

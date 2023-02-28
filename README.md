@@ -36,6 +36,19 @@ Optional parameter `student-id` is the users student id and may be provided so o
 The advantage of pinging such a managed role is, that these Managed roles are not visible in Discord at all.
 Further information on that can be found in the Implementation Details.
 
+### /join
+With `/join`you can join any course which is managed by Kilian. This allows veterans to help others in need right now. 
+Furthermore this lets people to lurk into other subjects if they are interested what is going on there. If a user does not 
+take this subject then they won't be pinged initially. This can be changed with `/toggleping`
+
+### /leave
+This command is the opposite of the previous. With `/leave` users can leave channels by typing the command in the corresponding channel.
+Even if a user is partaking the subject they can leave. A rejoin is always possible, and pings will automatically enabled for users taking the subject currently.
+
+### /toggleping
+`/toggleping` toggles the pinging bit in the bot for the current channel where the command has ben performed.
+If you are not sure what state you are currently in, Kilian will tell you after performing the command.
+
 ### /studid
 
 The `studid <@User>`-Command returns the student id of the user if they provided it with their link.
@@ -44,9 +57,6 @@ The `studid <@User>`-Command returns the student id of the user if they provided
 
 `/sleep` shuts Kilian down properly. 
 This command can only be run by Kilians dads, so make sure to be one of them!
-
-
-## Implementation Details
 
 ## Requirements
 
@@ -77,7 +87,6 @@ Don't worry about those error messages, they are from the [`interactions.py`](ht
   * Use more bots at the same time as "creating-slaves" to get rid of discord blocking the bot.
   * Deleting unused roles and channels on `/unkusss`
   * Add an "Archivesniffer"-Role to give people permissions to view older channels
-  * Add a "Veteran"-Role to give people permissions to get into channels and help others
   * `/studygroup`: Create a private voicechannel for - hmm.. well - studygroups
   * `/hiderole <@Role>`: Hide a already existent role and provide Kilians standard features for it
   * `/showrole <@Role>`: Reverse `/hiderole`
