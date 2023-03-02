@@ -45,6 +45,8 @@ if __name__ == '__main__':
 
             await ctx.send("Welcome on board " + ctx.author.name + "!")
 
+            await database.lock.acquire()
+
             guild_course_names = database.get_server_courses(guild_id, current_semester)
             new_courses = database.get_added_courses(student.discord_id, current_semester)
             missing_courses_by_name = dict()
@@ -81,6 +83,9 @@ if __name__ == '__main__':
                 added_roles.add((course_name, uni.current_semester(), guild_id, str(role.id), str(channel.id)))
 
             database.insert(added_roles)
+
+            database.lock.release()
+
             all_channels = await ctx.guild.get_all_channels()
             new_user_channels = set[interactions.Channel]()
             for course in new_courses:
