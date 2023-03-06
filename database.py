@@ -3,6 +3,7 @@
     Author: Tobias Pilz
     This part is responsible for everything related to the database.
 """
+import asyncio
 import sqlite3
 
 import kusss
@@ -32,6 +33,7 @@ class Database:
         self.__con__ = sqlite3.connect(__DB__)
         self.__cur__ = self.__con__.cursor()
         self.__cur__.execute("PRAGMA foreign_keys = ON")
+        self.lock = asyncio.Semaphore(1)
         self.__create_tables__()
         self.refresh()
 
