@@ -279,7 +279,6 @@ if __name__ == '__main__':
                    "\t\tPings are enabled deafult if you are registered for the course \n" \
                    "**/studid *<@User>* ** - Get the student id of other users. \n" \
                    "\t\tOnly possible if the student has entered his id on /kusss"
-        #double \t, because prettier, commands are bold and <link>, ... is italics
         await ctx.send(commands, ephemeral=True)
 
 
