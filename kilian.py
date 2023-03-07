@@ -267,6 +267,21 @@ if __name__ == '__main__':
             else:
                 await ctx.send("You will no longer be pinged.", ephemeral=True)
 
+    @bot.command()
+    async def help(ctx: interactions.CommandContext):
+        """Commands supported by Kilian"""
+        commands = "**/kusss *<link>* *[student-id]* ** - Subscribe to Kilian services. \n" \
+                   "\t\t*<link>* is obtained via KUSSS, *[student-id]* is optional and used for other commands \n" \
+                   "**/ping *@ManagedRole* ** - Ping a course chat. \n" \
+                   "**/join *<channel>* ** - Join another course chat managed by Kilian \n" \
+                   "**/leave** - Leave the channel managed by Kilian. \n" \
+                   "**/toggleping** - Enable or disable pings for a channel. \n" \
+                   "\t\tPings are enabled deafult if you are registered for the course \n" \
+                   "**/studid *<@User>* ** - Get the student id of other users. \n" \
+                   "\t\tOnly possible if the student has entered his id on /kusss"
+        #double \t, because prettier, commands are bold and <link>, ... is italics
+        await ctx.send(commands, ephemeral=True)
+
 
     @bot.command()
     async def sleep(ctx: interactions.CommandContext):
