@@ -80,5 +80,4 @@ Fill out `config.json`
 Don't worry about these error messages, they are from the [`interactions.py`](https://github.com/interactions-py/interactions.py) package and they are completely normal to us.
 
 ### Scalability issues
-  * If two or more persons use Kilian's `/kusss`-Command at the same time, courses are generated multiple times.
   * If 250 roles are generated in less than 48 hours, discord will block your bot for 24 hours. ([source](https://support.discord.com/hc/en-us/community/posts/360050533812-Extreme-rate-limits-on-the-role-create-endpoint))
