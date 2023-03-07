@@ -272,6 +272,8 @@ if __name__ == '__main__':
         """Commands supported by Kilian"""
         commands = "**/kusss *<link>* *[student-id]* ** - Subscribe to Kilian services. \n" \
                    "\t\t*<link>* is obtained via KUSSS, *[student-id]* is optional and used for other commands \n" \
+                   "\t\tYou can get your link from https://www.kusss.jku.at/kusss/ical-multi-form-sz.action. \n" \
+                   "\t\tClick \"Create\" if the link is not there yet. \n" \
                    "**/ping *@ManagedRole* ** - Ping a course chat. \n" \
                    "**/join *<channel>* ** - Join another course chat managed by Kilian \n" \
                    "**/leave** - Leave the channel managed by Kilian. \n" \
