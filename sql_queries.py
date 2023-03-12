@@ -195,3 +195,9 @@ is_managed_channel = "SELECT roles.* " \
 select_link = "SELECT calendar_link " \
               "FROM student " \
               "WHERE discord_id = ?"
+
+select_lva_names_by_discord_id = "SELECT DISTINCT c.lva_name " \
+                         "FROM student_courses " \
+                         "LEFT JOIN course c " \
+                         "  USING (lva_nr, semester) " \
+                         "WHERE (discord_id, student_courses.semester) = (?,?)"
