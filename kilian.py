@@ -311,8 +311,11 @@ if __name__ == '__main__':
         if message.author.id == bot.me.id:
             return
 
+        guild_id = message.guild_id
+        if guild_id is None:
+            return
         guild = await message.get_guild()
-        guild_id = str(guild.id)
+        guild_id = str(guild_id)
         mentioned_roles = [role_id for role_id in message.mention_roles if database.is_managed_role(guild_id, role_id)]
         if len(mentioned_roles) == 0:
             return
