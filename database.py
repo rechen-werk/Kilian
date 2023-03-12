@@ -125,6 +125,10 @@ class Database:
         result = list(self.__cur__.execute(query.select_role_and_channel_by_lva, (guild_id, lva_name, semester)))
         return result[0]
 
+    def get_role_by_channel_id(self, guild_id: str, channel_id: str):
+        result = list(self.__cur__.execute(query.select_role_by_channel, (guild_id, channel_id)))
+        return result[0][0]
+
     def has_category(self, guild_id: str) -> bool:
         result = list(self.__cur__.execute(query.select_category_by_guild, (guild_id,)))
         return len(result) > 0
@@ -194,6 +198,9 @@ class Database:
     def get_link(self, discord_id: str):
         result = list(self.__cur__.execute(query.select_link, (discord_id,)))
         return result[0][0]
+
+    def get_lva_names_by_discord_id(self, discord_id):
+        result = list(self.__cur__.execute(query.select_link, (discord_id,)))
 
     def close(self):
         self.__cur__.close()

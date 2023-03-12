@@ -52,6 +52,9 @@ if __name__ == '__main__':
             missing_courses_by_name = dict()
             for course in new_courses:
                 if course.lva_name in guild_course_names:
+                    role_id = database.get_role_and_channel(guild_id, course.lva_name, current_semester)[0]
+                    role = await ctx.guild.get_role(interactions.Snowflake(role_id))
+                    await ctx.author.add_role(role)
                     continue
                 if course.lva_name not in missing_courses_by_name.keys():
                     missing_courses_by_name[course.lva_name] = set()
@@ -74,34 +77,31 @@ if __name__ == '__main__':
                 database.set_cagegory(guild_id, str(category.id))
 
             added_roles = Roles()
+
+            from interactions import Permissions as p
+
             for course_name in missing_courses_by_name:
                 role = await ctx.guild.create_role(course_name)
+                channel_role_rule = interactions.Overwrite(
+                        id=str(role.id),
+                        allow=p.VIEW_CHANNEL | p.READ_MESSAGE_HISTORY)
+                everyone_id = next(filter(lambda x: x.name == "@everyone", await ctx.guild.get_all_roles())).id
+                make_private = interactions.Overwrite(
+                    id=everyone_id,
+                    deny=p.VIEW_CHANNEL
+                )
+                await ctx.author.add_role(role)
                 channel = await ctx.guild.create_channel(
                     name=course_name,
                     type=interactions.ChannelType.GUILD_TEXT,
-                    parent_id=category)
+                    parent_id=category,
+                    permission_overwrites=[make_private, channel_role_rule]
+                    )
                 added_roles.add((course_name, uni.current_semester(), guild_id, str(role.id), str(channel.id)))
 
             database.insert(added_roles)
 
             database.lock.release()
-
-            all_channels = await ctx.guild.get_all_channels()
-            new_user_channels = set[interactions.Channel]()
-            for course in new_courses:
-                channel_id = database.get_channel(guild_id, course.lva_name, course.semester)
-                for channel in all_channels:
-                    if channel.id == channel_id:
-                        new_user_channels.add(channel)
-                        break
-
-            from interactions import Permissions as p
-            new_rule = interactions.Overwrite(
-                id=str(ctx.author.id),
-                type=1,
-                allow=p.VIEW_CHANNEL | p.READ_MESSAGE_HISTORY)
-            for channel in new_user_channels:
-                await channel.modify(permission_overwrites=channel.permission_overwrites + [new_rule])
 
         except uni.InvalidURLException as ex:
             await ctx.send(ex.message, ephemeral=True)
@@ -112,6 +112,7 @@ if __name__ == '__main__':
         """Unsubscribe from the awesome features provided by Kilian™."""
         user_id = str(ctx.author.id)
         guild_id = str(ctx.guild_id)
+        current_semester = uni.current_semester()
 
         await ctx.send("A pity to see you leave " + ctx.author.name + ". You can join the club anytime with `/kusss`!")
         courses = database.get_added_courses(user_id, uni.current_semester())
@@ -124,9 +125,9 @@ if __name__ == '__main__':
         all_user_channels = set(filter(lambda c: str(c.id) in channel_ids, all_guild_channels))
 
         for channel in all_user_channels:
-            permission_overwrites = channel.permission_overwrites
-            permission_overwrites = list(filter(lambda po: po.id != ctx.author.id, permission_overwrites))
-            await channel.modify(permission_overwrites=permission_overwrites)
+            role_id = database.get_role_by_channel_id(guild_id, str(channel.id))
+            role = await ctx.guild.get_role(interactions.Snowflake(role_id))
+            await ctx.author.remove_role(role)
 
 
     @bot.command()
