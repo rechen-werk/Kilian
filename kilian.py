@@ -75,9 +75,10 @@ if __name__ == '__main__':
 
             added_roles = Roles()
             for course_name in missing_courses_by_name:
-                role = await ctx.guild.create_role(course_name)
+                role = await ctx.guild.create_role(course_name[:95] if len(course_name) > 95 else course_name)
+
                 channel = await ctx.guild.create_channel(
-                    name=course_name,
+                    name=(course_name[:95] if len(course_name) > 95 else course_name),
                     type=interactions.ChannelType.GUILD_TEXT,
                     parent_id=category)
                 added_roles.add((course_name, uni.current_semester(), guild_id, str(role.id), str(channel.id)))
