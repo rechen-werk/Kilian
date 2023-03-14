@@ -291,6 +291,30 @@ if __name__ == '__main__':
 
 
     @bot.command()
+    async def studygroup():
+        """Create or delete a study group."""
+        pass
+
+    @studygroup.subcommand()
+    @interactions.option(description="Name of the group you want to create.")
+    async def create(ctx: interactions.CommandContext, name: str):
+        """Create a learning group. The group will be deleted automatically if unused for 10 days."""
+        await ctx.send("HI", ephemeral=True)
+
+    @studygroup.subcommand()
+    @interactions.option(description="Channel of the learning gruop.")
+    async def dissolve(ctx: interactions.CommandContext, channel: interactions.Channel):
+        """Dissolve the learning group."""
+        await ctx.send("BYE", ephemeral=True)
+
+    @studygroup.subcommand()
+    @interactions.option(description="Channel of the learning gruop.")
+    @interactions.option(description="User to invite.")
+    async def invite(ctx: interactions.CommandContext, channel: interactions.Channel, user: interactions.Member):
+        """Invite a user to the learning group."""
+        await ctx.send("COME", ephemeral=True)
+
+    @bot.command()
     async def sleep(ctx: interactions.CommandContext):
         """Make Kilian go nighty night."""
 
