@@ -5,6 +5,8 @@
 """
 
 import argparse
+from datetime import datetime, timedelta
+
 import interactions
 import kusss as uni
 from database import Database, Roles, StudentCourse
@@ -298,7 +300,7 @@ if __name__ == '__main__':
     @studygroup.subcommand()
     @interactions.option(description="Name of the group you want to create.")
     async def create(ctx: interactions.CommandContext, name: str):
-        """Create a learning group. The group will be deleted automatically if unused for 10 days."""
+        """Create a learning group. The group will be deleted automatically if not joined for 10 days."""
         await ctx.send("HI", ephemeral=True)
 
     @studygroup.subcommand()
@@ -361,6 +363,13 @@ if __name__ == '__main__':
     @bot.event()
     async def on_start():
         print("Good morning daddy!")
+
+    @bot.event()
+    async def on_voice_state_update(very_sus_parameter, voice_state: interactions.VoiceState):
+        if voice_state.joined:
+            guild_id = str(voice_state.guild_id)
+            channel_id = str(voice_state.channel_id)
+            database.update_studygroup(guild_id, channel_id, datetime.now() + timedelta(days=10))
 
 
     bot.start()
