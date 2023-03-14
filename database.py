@@ -51,6 +51,7 @@ class Database:
         self.__cur__.execute(query.create_class)
         self.__cur__.execute(query.create_roles)
         self.__cur__.execute(query.create_categories)
+        self.__cur__.execute(query.create_studygroup)
 
     def insert(self, obj):
         match obj:
@@ -194,6 +195,24 @@ class Database:
     def get_link(self, discord_id: str):
         result = list(self.__cur__.execute(query.select_link, (discord_id,)))
         return result[0][0]
+
+    def create_studygroup(self):
+        pass
+
+    def update_studygroup(self):
+        pass
+
+    def delete_studygroup(self):
+        pass
+
+    def all_studygroups(self):
+        pass
+
+    def studygroup_name(self):
+        pass
+
+    def studygroup_creator(self):
+        pass
 
     def close(self):
         self.__cur__.close()
