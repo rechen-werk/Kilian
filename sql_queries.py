@@ -28,6 +28,10 @@ insert_roles = "REPLACE INTO " \
                "roles(lva_name, semester, guild_id, role_id, channel_id) " \
                "VALUES (?,?,?,?,?)"
 
+insert_studygroup = "REPLACE INTO " \
+                    "studygroup(guild_id, channel_id, name, creator_id, delete_timestamp) " \
+                    "VALUES (?,?,?,?,?)"
+
 insert_category = "REPLACE INTO " \
                   "category(guild_id, category_id) " \
                   "VALUES (?,?)"
@@ -36,11 +40,17 @@ toggle_active = "UPDATE student_courses " \
                 "SET (active) = (?) " \
                 "WHERE (discord_id, lva_nr, semester) = (?,?,?)"
 
+update_studygroup = "UPDATE studygroup " \
+                    "SET (delete_timestamp) = (?) " \
+                    "WHERE (guild_id, channel_id) = (?,?)"
+
 delete_student = "DELETE FROM student WHERE discord_id = ?"
 
 delete_role = "DELETE FROM roles WHERE (guild_id, role_id) = (?,?)"
 
 delete_student_course = "DELETE FROM student_courses WHERE (discord_id, lva_nr, semester) = (?,?,?)"
+
+delete_studygroup = "DELETE FROM studygroup WHERE (guild_id, channel_id) = (?,?)"
 
 create_student = "CREATE TABLE IF NOT EXISTS student(" \
                  "discord_id TEXT NOT NULL, " \
@@ -101,6 +111,15 @@ create_categories = "CREATE TABLE IF NOT EXISTS category(" \
                     "guild_id TEXT NOT NULL," \
                     "category_id TEXT NOT NULL," \
                     "PRIMARY KEY (guild_id)" \
+                    ")"
+
+create_studygroup = "CREATE TABLE IF NOT EXISTS studygroup(" \
+                    "guild_id TEXT NOT NULL," \
+                    "channel_id TEXT NOT NULL," \
+                    "name TEXT NOT NULL," \
+                    "creator_id TEXT NOT NULL," \
+                    "delete_timestamp TEXT NOT NULL," \
+                    "PRIMARY KEY (guild_id, channel_id)" \
                     ")"
 
 select_category_by_guild = "SELECT category_id " \
@@ -183,6 +202,12 @@ select_student_courses_by_id = "SELECT sc.lva_nr " \
                                "WHERE sc.lva_nr = c.lva_nr " \
                                "AND sc.semester = c.semester " \
                                "AND (discord_id, sc.semester,lva_name) = (?,?,?)"
+
+select_all_studygroups = "SELECT * FROM studygroup"
+
+select_name_from_studygroup = "SELECT name FROM studygroup WHERE (guild_id, channel_id)"
+
+select_creator_from_studygroup = "SELECT creator_id FROM studygroup WHERE (guild_id, channel_id)"
 
 is_kusss = "SELECT student.* " \
            "FROM student " \
