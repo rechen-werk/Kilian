@@ -294,7 +294,7 @@ if __name__ == '__main__':
     async def sleep(ctx: interactions.CommandContext):
         """Make Kilian go nighty night."""
 
-        if dads.count(str(ctx.author.id)):
+        if dads.count(ctx.author.id):
             await ctx.send("Good night, daddy!", ephemeral=True)
             await bot._stop()
         else:
