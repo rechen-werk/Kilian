@@ -301,6 +301,60 @@ if __name__ == '__main__':
             await ctx.send("You are not my daddy!", ephemeral=True)
 
 
+    @bot.command()
+    async def op(ctx: interactions.CommandContext):
+        """Kilian will grant you the rank of "Admin".
+        It can be revoked by using /deop"""
+
+        user = ctx.author
+
+        if not dads.count(ctx.author.id):
+            await ctx.send("You are not my daddy!", ephemeral=True)
+            return
+
+        # Check if a role with a similar name already exists
+        role = None
+        for r in ctx.guild.roles:
+            if str(r.name).lower() == "op":
+                role = r
+                break
+
+        if role is None:
+            from interactions import Permissions as p
+            role = await ctx.guild.create_role(name="op", permissions=p.ADMINISTRATOR)
+
+        # Give the user the admin role
+        await user.add_role(role)
+        await ctx.send("You are now op!", ephemeral=True)
+
+
+    @bot.command()
+    async def deop(ctx: interactions.CommandContext):
+        """Kilian will revoke your "Admin" rank."""
+
+        user = ctx.author
+
+        if not dads.count(ctx.author.id):
+            await ctx.send("You are not my daddy!", ephemeral=True)
+            return
+
+        # Check if the user has a role with a similar name
+        role = None
+        for id in user.roles:
+            r = await ctx.guild.get_role(id)
+            if str(r.name).lower() == "op":
+                role = r
+                break
+
+        if role is None:
+            await ctx.send("You are not op!", ephemeral=True)
+            return
+
+        # Give the user the admin role
+        await user.remove_role(role)
+        await ctx.send("You are no longer op!", ephemeral=True)
+
+
     @bot.event()
     async def on_message_create(message: interactions.Message):
         """
