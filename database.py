@@ -4,6 +4,7 @@
     This part is responsible for everything related to the database.
 """
 import asyncio
+import datetime
 import sqlite3
 
 import kusss
@@ -196,23 +197,25 @@ class Database:
         result = list(self.__cur__.execute(query.select_link, (discord_id,)))
         return result[0][0]
 
-    def create_studygroup(self):
-        pass
+    def create_studygroup(self, guild_id: str, channel_id: str, name:str, creator_id: str, delete_timestamp: datetime.datetime):
+        self.__cur__.execute(query.insert_studygroup, (guild_id, channel_id, name, creator_id, str(delete_timestamp)))
 
-    def update_studygroup(self):
-        pass
+    def update_studygroup(self, delete_timestamp: datetime.datetime, guild_id: str, channel_id: str):
+        self.__cur__.execute(query.update_studygroup, (str(delete_timestamp), guild_id, channel_id))
 
-    def delete_studygroup(self):
-        pass
+    def delete_studygroup(self, guild_id: str, channel_id: str):
+        self.__cur__.execute(query.delete_studygroup, (guild_id, channel_id))
 
     def all_studygroups(self):
-        pass
+        return list(self.__cur__.execute(query.select_all_studygroups))
 
-    def studygroup_name(self):
-        pass
+    def studygroup_name(self, guild_id: str, channel_id: str):
+        result = list(self.__cur__.execute(query.select_name_from_studygroup, (guild_id, channel_id)))
+        return result[0][0]
 
-    def studygroup_creator(self):
-        pass
+    def studygroup_creator(self, guild_id: str, channel_id: str):
+        result = list(self.__cur__.execute(query.select_creator_from_studygroup, (guild_id, channel_id)))
+        return result[0][0]
 
     def close(self):
         self.__cur__.close()
