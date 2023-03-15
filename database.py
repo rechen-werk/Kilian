@@ -53,6 +53,7 @@ class Database:
         self.__cur__.execute(query.create_roles)
         self.__cur__.execute(query.create_categories)
         self.__cur__.execute(query.create_studygroup)
+        self.__cur__.execute(query.create_studygroup_member)
 
     def insert(self, obj):
         match obj:
@@ -216,6 +217,15 @@ class Database:
     def studygroup_creator(self, guild_id: str, channel_id: str):
         result = list(self.__cur__.execute(query.select_creator_from_studygroup, (guild_id, channel_id)))
         return result[0][0]
+
+    def add_studygroup_member(self, guild_id: str, channel_id: str, discord_id: str):
+        self.__cur__.execute(query.insert_studygroup_member, (guild_id, channel_id, discord_id))
+
+    def remove_studygroup_member(self, guild_id: str, channel_id: str, discord_id: str):
+        self.__cur__.execute(query.delete_studygroup_member, (guild_id, channel_id, discord_id))
+
+    def is_studygroup_member(self, guild_id: str, channel_id: str, discord_id: str):
+        return len(list(self.__cur__.execute(query.select_studygroup_member, (guild_id, channel_id, discord_id)))) > 0
 
     def close(self):
         self.__cur__.close()
