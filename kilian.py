@@ -303,7 +303,7 @@ if __name__ == '__main__':
 
     @bot.command()
     async def op(ctx: interactions.CommandContext):
-        """Kilian will grant you the rank of "Admin".
+        """Kilian will grant you the rank of "op".
         It can be revoked by using /deop"""
 
         user = ctx.author
@@ -330,7 +330,7 @@ if __name__ == '__main__':
 
     @bot.command()
     async def deop(ctx: interactions.CommandContext):
-        """Kilian will revoke your "Admin" rank."""
+        """Kilian will revoke your "op" rank."""
 
         user = ctx.author
 
