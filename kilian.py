@@ -308,9 +308,12 @@ if __name__ == '__main__':
     @interactions.option(description="Name of the group you want to create.")
     async def create(ctx: interactions.CommandContext, name: str):
         """Create a learning group. The group will be deleted automatically if not joined for 10 days."""
-        channel_id = "channel_id_placeholder"  # TODO: create channel here
-        database.create_studygroup(str(ctx.guild_id), channel_id, name, str(ctx.author.id),
-                                   datetime.now() + timedelta(days=10))
+        category = get_category(ctx.guild)
+        channel = await ctx.guild.create_channel(
+            name=name,
+            type=interactions.ChannelType.GUILD_VOICE,
+            parent_id=category)
+        database.create_studygroup(str(ctx.guild_id), str(channel.id), name, str(ctx.author.id), datetime.now() + timedelta(days=10))
         await ctx.send("Created new study group: " + name, ephemeral=True)
 
     @studygroup.subcommand()
