@@ -21,6 +21,28 @@ def parse_args():
     return parser.parse_args()
 
 
+def get_category(guild: interactions.Guild):
+    guild_id = str(guild.id)
+    if database.has_category(guild_id):
+        category = database.get_category(guild_id)
+    else:
+        everyone_id = next(filter(lambda x: x.name == "@everyone", await guild.get_all_roles())).id
+        category = await guild.create_channel(
+            name=uni.current_semester(), type=interactions.ChannelType.GUILD_CATEGORY,
+            permission_overwrites=[
+                interactions.Overwrite(
+                    id=str(everyone_id),
+                    type=0,
+                    deny=interactions.Permissions.VIEW_CHANNEL,
+                    allow=interactions.Permissions.MENTION_EVERYONE |
+                          interactions.Permissions.USE_APPLICATION_COMMANDS
+                )])
+        database.set_cagegory(guild_id, str(category.id))
+        category = str(category.id)
+
+    return category
+
+
 if __name__ == '__main__':
     args = parse_args()
 
@@ -59,21 +81,7 @@ if __name__ == '__main__':
                     missing_courses_by_name[course.lva_name] = set()
                 missing_courses_by_name[course.lva_name].add(course)
 
-            if database.has_category(guild_id):
-                category = database.get_category(guild_id)
-            else:
-                everyone_id = next(filter(lambda x: x.name == "@everyone", await ctx.guild.get_all_roles())).id
-                category = await ctx.guild.create_channel(
-                    name=uni.current_semester(), type=interactions.ChannelType.GUILD_CATEGORY,
-                    permission_overwrites=[
-                        interactions.Overwrite(
-                            id=str(everyone_id),
-                            type=0,
-                            deny=interactions.Permissions.VIEW_CHANNEL,
-                            allow=interactions.Permissions.MENTION_EVERYONE |
-                                  interactions.Permissions.USE_APPLICATION_COMMANDS
-                        )])
-                database.set_cagegory(guild_id, str(category.id))
+            category = get_category(ctx.guild)
 
             added_roles = Roles()
             for course_name in missing_courses_by_name:
@@ -295,22 +303,24 @@ if __name__ == '__main__':
     @bot.command()
     async def studygroup():
         """Create or delete a study group."""
-        pass
 
     @studygroup.subcommand()
     @interactions.option(description="Name of the group you want to create.")
     async def create(ctx: interactions.CommandContext, name: str):
         """Create a learning group. The group will be deleted automatically if not joined for 10 days."""
-        await ctx.send("HI", ephemeral=True)
+        channel_id = "channel_id_placeholder"  # TODO: create channel here
+        database.create_studygroup(str(ctx.guild_id), channel_id, name, str(ctx.author.id),
+                                   datetime.now() + timedelta(days=10))
+        await ctx.send("Created new study group: " + name, ephemeral=True)
 
     @studygroup.subcommand()
-    @interactions.option(description="Channel of the learning gruop.")
+    @interactions.option(description="Channel of the learning group.")
     async def dissolve(ctx: interactions.CommandContext, channel: interactions.Channel):
         """Dissolve the learning group."""
         await ctx.send("BYE", ephemeral=True)
 
     @studygroup.subcommand()
-    @interactions.option(description="Channel of the learning gruop.")
+    @interactions.option(description="Channel of the learning group.")
     @interactions.option(description="User to invite.")
     async def invite(ctx: interactions.CommandContext, channel: interactions.Channel, user: interactions.Member):
         """Invite a user to the learning group."""
@@ -365,11 +375,11 @@ if __name__ == '__main__':
         print("Good morning daddy!")
 
     @bot.event()
-    async def on_voice_state_update(very_sus_parameter, voice_state: interactions.VoiceState):
+    async def on_voice_state_update(_, voice_state: interactions.VoiceState):
         if voice_state.joined:
             guild_id = str(voice_state.guild_id)
             channel_id = str(voice_state.channel_id)
-            database.update_studygroup(guild_id, channel_id, datetime.now() + timedelta(days=10))
+            database.update_studygroup(datetime.now() + timedelta(days=10), guild_id, channel_id)
 
 
     bot.start()
