@@ -41,9 +41,12 @@ if __name__ == '__main__':
             guild_id = str(ctx.guild_id)
             current_semester = uni.current_semester()
             student = uni.student(str(ctx.author.id), link, studentnumber)
-            database.insert(student)
+            if database.is_kusss(str( ctx.author.id)):
+                await ctx.send(f"Your courses will be updated {ctx.author.name}!")
+            else:
+                await ctx.send(f"Welcome on board {ctx.author.name}!")
 
-            await ctx.send("Welcome on board " + ctx.author.name + "!")
+            database.insert(student)
 
             await database.lock.acquire()
 
@@ -113,8 +116,13 @@ if __name__ == '__main__':
         """Unsubscribe from the awesome features provided by Kilian™."""
         user_id = str(ctx.author.id)
         guild_id = str(ctx.guild_id)
-
-        await ctx.send("A pity to see you leave " + ctx.author.name + ". You can join the club anytime with `/kusss`!")
+        if not database.is_kusss(str(ctx.author.id)):
+            await ctx.send(f"Seems that your are not registered {ctx.author.name}! You can join the club anytime with "
+                           f"`/kusss`!")
+            return
+        if database.is_kusss(str(ctx.author.id)):
+            await ctx.send("A pity to see you leave " + ctx.author.name + ". You can join the club anytime with "
+                                                                          "`/kusss`!")
         courses = database.get_added_courses(user_id, uni.current_semester())
         database.delete_student(user_id)
 
@@ -162,6 +170,9 @@ if __name__ == '__main__':
     @interactions.option(description="The user you want the student id of.")
     async def studid(ctx: interactions.CommandContext, member: interactions.Member):
         """Get student id of the specified user."""
+        if not database.get_matr_nr(str(member.id)):
+            await ctx.send(f"{member.name} hasn't registered a student id in Kilian", ephemeral=True)
+            return
         await ctx.send(database.get_matr_nr(str(member.id)), ephemeral=True)
 
 
