@@ -41,11 +41,10 @@ if __name__ == '__main__':
             guild_id = str(ctx.guild_id)
             current_semester = uni.current_semester()
             student = uni.student(str(ctx.author.id), link, studentnumber)
-            if database.is_kusss(str( ctx.author.id)):
+            if database.is_kusss(str(ctx.author.id)):
                 await ctx.send(f"Your courses will be updated {ctx.author.name}!")
             else:
                 await ctx.send(f"Welcome on board {ctx.author.name}!")
-
             database.insert(student)
 
             await database.lock.acquire()
@@ -284,22 +283,6 @@ if __name__ == '__main__':
             else:
                 await ctx.send("You will no longer be pinged.", ephemeral=True)
 
-    @bot.command()
-    async def help(ctx: interactions.CommandContext):
-        """Commands supported by Kilian"""
-        commands = "**/kusss *<link>* *[student-id]* ** - Subscribe to Kilian services. \n" \
-                   "\t\t*<link>* is obtained via KUSSS, *[student-id]* is optional and used for other commands \n" \
-                   "\t\tYou can get your link from https://www.kusss.jku.at/kusss/ical-multi-form-sz.action. \n" \
-                   "\t\tClick \"Create\" if the link is not there yet. \n" \
-                   "**/ping *@ManagedRole* ** - Ping a course chat. \n" \
-                   "**/join *<channel>* ** - Join another course chat managed by Kilian \n" \
-                   "**/leave** - Leave the channel managed by Kilian. \n" \
-                   "**/toggleping** - Enable or disable pings for a channel. \n" \
-                   "\t\tPings are enabled deafult if you are registered for the course \n" \
-                   "**/studid *<@User>* ** - Get the student id of other users. \n" \
-                   "\t\tOnly possible if the student has entered his id on /kusss"
-        await ctx.send(commands, ephemeral=True)
-
 
     @bot.command()
     async def sleep(ctx: interactions.CommandContext):
@@ -364,6 +347,78 @@ if __name__ == '__main__':
         # Give the user the admin role
         await user.remove_role(role)
         await ctx.send("You are no longer op!", ephemeral=True)
+
+
+    # All new commands which are below help won't be listed inside the help choices
+    @bot.command()
+    @interactions.option(type=interactions.OptionType.STRING,
+                         description="Subcategory of Help",
+                         required=False,
+                         choices=[interactions.Choice(name=com.name, value="/" + com.name) for com in bot._commands]
+                         )
+    async def help(ctx: interactions.CommandContext, subcategory: str = None):
+        """Commands supported by Kilian"""
+        embeded = interactions.Embed(title="Help Menu", color=0xe70808)
+        help_dict = {
+            "/kusss": {"params": {"<link>": "link of your KUSSS calender\nis obtained via KUSSS"},
+                       "optional_params": {
+                           "[student-id]": "your matrikelnumber\nis optional and used for other commands "},
+                       "details": "You can get your link from:\nhttps://www.kusss.jku.at/kusss/ical-multi-form-sz.action\nClick \"Create\" if the link is not there yet.",
+                       "description": "Subscribe to Kilian services.", "inline": False},
+            "/unkusss": {"params": {}, "optional_params": {},
+                         "details": "",
+                         "description": "Ping a course chat", "inline": False},
+            "/ping": {"params": {"<@ManagedRole>": "the roles of course which should get pinged"},
+                      "optional_params": {"[content]": "the message attached to the ping"},
+                      "details": "",
+                      "description": "Ping a course chat.", "inline": True},
+            "/join": {"params": {"<channel>": "The role with the same name as the course channel you want to join "},
+                      "optional_params": {},
+                      "details": "",
+                      "description": "Join another course chat managed by Kilian", "inline": True},
+            "/leave": {"params": {}, "optional_params": {},
+                       "details": "",
+                       "description": "Leave the channel managed by Kilian", "inline": True},
+            "/toggleping": {"params": {}, "optional_params": {},
+                            "details": "Enable or disable pings for a channel.\nPings are enabled default if you are "
+                                       "registered for the course",
+                            "description": "Enable or disable pings for a channel.", "inline": True},
+            "/studid": {"params": {"<@User>": "The user you want the studid of"}, "optional_params": {},
+                        "details": "Only possible if the student has entered his id on /kusss\nYou can still update "
+                                   "your studid with /kusss",
+                        "description": "Get the student id of other users.", "inline": True},
+        }
+        if not subcategory:
+            for command in help_dict.keys():
+                params_keys = help_dict[command]['params'].keys()
+                optional_params_keys = help_dict[command]['optional_params'].keys()
+                params_text = f"*{' '.join(params_keys)}*" if len(params_keys) > 0 else ""
+                optional_params_text = f"*{' '.join(optional_params_keys)}*" if len(optional_params_keys) > 0 else ""
+
+                embeded.add_field(f"**{command} {params_text} {optional_params_text} **",
+                                  help_dict[command]['description'],
+                                  inline=help_dict[command]['inline'])
+        else:
+            if list(help_dict.keys()).count(subcategory) == 0:
+                await ctx.send(
+                    content=f"We are sorry the help for the command {subcategory} isn't implemented yet!\nFor further information contact a developer!",
+                    ephemeral=True)
+                return
+
+            embeded.title = embeded.title + " - " + subcategory
+            params_keys = help_dict[subcategory]['params'].keys()
+            optional_params_keys = help_dict[subcategory]['optional_params'].keys()
+            params_text = f"*{' '.join(params_keys)}*" if len(params_keys) > 0 else ""
+            optional_params_text = f"*{' '.join(optional_params_keys)}*" if len(optional_params_keys) > 0 else ""
+            embeded.description = f"**{subcategory} {params_text} {optional_params_text} **"
+            for param in params_keys:
+                embeded.add_field(f"*{param}*", f"{help_dict[subcategory]['params'][param]}", inline=True)
+            for param in optional_params_keys:
+                embeded.add_field(f"*{param}*", f"{help_dict[subcategory]['optional_params'][param]}", inline=True)
+            if help_dict[subcategory]['details'] != "":
+                embeded.add_field("Details", help_dict[subcategory]['details'])
+
+        await ctx.send(embeds=embeded, ephemeral=True)
 
 
     @bot.event()
