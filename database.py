@@ -13,21 +13,6 @@ from kusss import Student, Course, Class
 __DB__ = "discord.db"
 
 
-class Roles(set):
-    pass
-
-
-class StudentCourse:
-    def __init__(self, discord_id: str, semester: str, lva_nr: str, active: bool):
-        self.discord_id = discord_id
-        self.semester = semester
-        self.lva_nr = lva_nr
-        self.active = active
-
-    def to_db_entry(self) -> tuple:
-        return self.discord_id, self.lva_nr, self.semester, self.active
-
-
 class Database:
     def __init__(self):
         self.__con__ = sqlite3.connect(__DB__)
@@ -51,6 +36,8 @@ class Database:
         self.__cur__.execute(query.create_class)
         self.__cur__.execute(query.create_roles)
         self.__cur__.execute(query.create_categories)
+        self.__cur__.execute(query.create_hidden_roles)
+        self.__cur__.execute(query.create_hidden_role_users)
 
     def insert(self, obj):
         match obj:
@@ -67,6 +54,10 @@ class Database:
                 self.__cur__.executemany(query.insert_roles, obj)
             case StudentCourse():
                 self.__cur__.execute(query.insert_student_courses, obj.to_db_entry())
+            case HiddenRole():
+                self.__cur__.execute(query.insert_hidden_role, (obj,))
+            case HiddenRoleUsers():
+                self.__cur__.executemany(query.insert_hidden_role_users, obj)
             case _:
                 return NotImplemented
         self.__con__.commit()
@@ -105,8 +96,8 @@ class Database:
         return {entry[0] for entry in result}
 
     def get_added_courses(self, discord_id: str, semester: str) -> set[Course]:
-        result = {Course(*elem[0:4], teachers=[], link=elem[4])
-                  for elem in self.__cur__.execute(query.select_student_courses, (discord_id, semester))}
+        result = {Course(*elem[0:4], teachers=[], link=elem[4]) for elem in
+                  self.__cur__.execute(query.select_student_courses, (discord_id, semester))}
         return result
 
     def get_course(self, lva_nr: str, semester: str) -> Course:
@@ -195,6 +186,41 @@ class Database:
         result = list(self.__cur__.execute(query.select_link, (discord_id,)))
         return result[0][0]
 
+    def delete_hidden_role(self, role_id: str):
+        self.__cur__.execute(query.delete_hidden_role, (role_id,))
+        self.__con__.commit()
+
+    def is_hidden_role(self, role_id: str) -> bool:
+        result = list(self.__cur__.execute(query.select_hidden_role_by_id, (role_id,)))
+        return len(result) >= 1
+
+    def get_hidden_role_users(self, role_id: str):
+        result = {elem[0] for elem in self.__cur__.execute(query.select_hidden_role_users, (role_id,))}
+        return result
+
     def close(self):
         self.__cur__.close()
         self.__con__.close()
+
+
+class Roles(set):
+    pass
+
+
+class HiddenRole(str):
+    pass
+
+
+class HiddenRoleUsers(set):
+    pass
+
+
+class StudentCourse:
+    def __init__(self, discord_id: str, semester: str, lva_nr: str, active: bool):
+        self.discord_id = discord_id
+        self.semester = semester
+        self.lva_nr = lva_nr
+        self.active = active
+
+    def to_db_entry(self) -> tuple:
+        return self.discord_id, self.lva_nr, self.semester, self.active

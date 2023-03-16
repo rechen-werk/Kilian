@@ -7,7 +7,7 @@
 import argparse
 import interactions
 import kusss as uni
-from database import Database, Roles, StudentCourse
+from database import Database, Roles, StudentCourse, HiddenRole, HiddenRoleUsers
 import json
 
 
@@ -41,7 +41,7 @@ if __name__ == '__main__':
             guild_id = str(ctx.guild_id)
             current_semester = uni.current_semester()
             student = uni.student(str(ctx.author.id), link, studentnumber)
-            if database.is_kusss(str( ctx.author.id)):
+            if database.is_kusss(str(ctx.author.id)):
                 await ctx.send(f"Your courses will be updated {ctx.author.name}!")
             else:
                 await ctx.send(f"Welcome on board {ctx.author.name}!")
@@ -117,12 +117,14 @@ if __name__ == '__main__':
         user_id = str(ctx.author.id)
         guild_id = str(ctx.guild_id)
         if not database.is_kusss(str(ctx.author.id)):
-            await ctx.send(f"Seems that your are not registered {ctx.author.name}! You can join the club anytime with "
-                           f"`/kusss`!")
+            await ctx.send(
+                f"Seems that your are not registered {ctx.author.name}! You can join the club anytime with "
+                f"`/kusss`!")
             return
         if database.is_kusss(str(ctx.author.id)):
-            await ctx.send("A pity to see you leave " + ctx.author.name + ". You can join the club anytime with "
-                                                                          "`/kusss`!")
+            await ctx.send(
+                "A pity to see you leave " + ctx.author.name + ". You can join the club anytime with "
+                                                               "`/kusss`!")
         courses = database.get_added_courses(user_id, uni.current_semester())
         database.delete_student(user_id)
 
@@ -284,6 +286,7 @@ if __name__ == '__main__':
             else:
                 await ctx.send("You will no longer be pinged.", ephemeral=True)
 
+
     @bot.command()
     async def help(ctx: interactions.CommandContext):
         """Commands supported by Kilian"""
@@ -367,15 +370,84 @@ if __name__ == '__main__':
 
 
     @bot.command()
-    @interactions.option("Role you want to be managed by Kilian.")
-    async def hide(ctx: interactions.CommandContext):
-        pass
+    @interactions.option(description="Role you want to be managed by Kilian.")
+    async def hide(ctx: interactions.CommandContext, role: interactions.Role):
+        """Hide the role and let Kilian manage it"""
+        if not dads.count(ctx.author.id):
+            await ctx.send("You are not my daddy!", ephemeral=True)
+            return
+
+        role_id = str(role.id)
+        guild_id = str(ctx.guild_id)
+
+        async with database.lock:
+            if database.is_managed_role(guild_id, role_id) or database.is_hidden_role(role_id):
+                await ctx.send("This role is already managed by Kilian", ephemeral=True)
+                database.lock.release()
+                return
+
+            members = {member for member in ctx.guild.members if role.id in member.roles}
+            service_users = HiddenRoleUsers((role_id, str(member.id)) for member in members)
+
+            database.insert(HiddenRole(role_id))
+            database.insert(service_users)
+
+        for user in members:
+            await ctx.guild.remove_member_role(role, user)
+
+        await ctx.send("Role is now managed", ephemeral=True)
 
 
     @bot.command()
-    @interactions.option("Role you want not to be managed anymore.")
-    async def show(ctx: interactions.CommandContext):
-        pass
+    @interactions.option(description="Role you want not to be managed anymore.")
+    async def show(ctx: interactions.CommandContext, role: interactions.Role):
+        """Show a managed role and suspend Kilian's services for it"""
+        if not dads.count(ctx.author.id):
+            await ctx.send("You are not my daddy!", ephemeral=True)
+            return
+
+        role_id = str(role.id)
+        guild_id = str(ctx.guild_id)
+
+        async with database.lock:
+            if database.is_managed_role(guild_id, role_id):
+                await ctx.send("This role was created by Kilian, you cannot show it!", ephemeral=True)
+                return
+
+            if not database.is_hidden_role(role_id):
+                await ctx.send("This is not a managed role!", ephemeral=True)
+                return
+
+            user_ids = database.get_hidden_role_users(role_id)
+            database.delete_hidden_role(role_id)
+
+        for user_id in user_ids:
+            await ctx.guild.add_member_role(role, int(user_id))
+
+        await ctx.send("Role should now be visible again", ephemeral=True)
+
+
+    @bot.event()
+    async def on_guild_member_update(_, guild_member: interactions.GuildMember):
+        """Add an entry to the database if an 'hidden' role is added to a user, then hide it again in discord"""
+        user_id = str(guild_member.id)
+        user_roles = guild_member.roles
+
+        async with database.lock:
+            new_service_users = HiddenRoleUsers()
+
+            for role_id in user_roles:
+                if not database.is_hidden_role(str(role_id)):
+                    continue
+
+                service_users = database.get_hidden_role_users(str(role_id))
+                if user_id not in service_users:
+                    new_service_users.add((role_id, user_id))
+
+                # INFO: this line triggers this event once more. This cannot be prevented.
+                await guild_member.guild.remove_member_role(role_id, int(user_id))
+
+            database.insert(new_service_users)
 
 
     @bot.event()

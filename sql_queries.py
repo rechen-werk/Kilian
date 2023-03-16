@@ -4,6 +4,7 @@
     This file contains all queries for database.py.
 """
 
+# INSERT
 insert_student = "REPLACE INTO " \
                  "student(discord_id, student_id, calendar_link) " \
                  "VALUES (?,?,?)"
@@ -32,16 +33,29 @@ insert_category = "REPLACE INTO " \
                   "category(guild_id, category_id) " \
                   "VALUES (?,?)"
 
+insert_hidden_role = "REPLACE INTO " \
+                     "hidden_roles(role_id) " \
+                     "VALUES (?)"
+
+insert_hidden_role_users = "REPLACE INTO " \
+                           "hidden_role_users(role_id, user_id) " \
+                           "VALUES (?,?)"
+
+# UPDATE
 toggle_active = "UPDATE student_courses " \
                 "SET (active) = (?) " \
                 "WHERE (discord_id, lva_nr, semester) = (?,?,?)"
 
+# DELETE
 delete_student = "DELETE FROM student WHERE discord_id = ?"
 
 delete_role = "DELETE FROM roles WHERE (guild_id, role_id) = (?,?)"
 
 delete_student_course = "DELETE FROM student_courses WHERE (discord_id, lva_nr, semester) = (?,?,?)"
 
+delete_hidden_role = "DELETE FROM hidden_roles WHERE (role_id) = (?)"
+
+# CREATE
 create_student = "CREATE TABLE IF NOT EXISTS student(" \
                  "discord_id TEXT NOT NULL, " \
                  "student_id TEXT, " \
@@ -97,12 +111,27 @@ create_roles = "CREATE TABLE IF NOT EXISTS roles(" \
                "PRIMARY KEY (lva_name, semester, guild_id)" \
                ")"
 
+create_hidden_roles = "CREATE TABLE IF NOT EXISTS hidden_roles(" \
+                      "role_id TEXT NOT NULL, " \
+                      "PRIMARY KEY (role_id)" \
+                      ")"
+
+create_hidden_role_users = "CREATE TABLE IF NOT EXISTS hidden_role_users(" \
+                           "role_id TEXT NOT NULL, " \
+                           "user_id TEXT NOT NULL, " \
+                           "PRIMARY KEY (role_id, user_id), " \
+                           "CONSTRAINT fk_role_id " \
+                           "    FOREIGN KEY (role_id) REFERENCES hidden_roles" \
+                           "    ON DELETE CASCADE" \
+                           ")"
+
 create_categories = "CREATE TABLE IF NOT EXISTS category(" \
                     "guild_id TEXT NOT NULL," \
                     "category_id TEXT NOT NULL," \
                     "PRIMARY KEY (guild_id)" \
                     ")"
 
+# SELECT
 select_category_by_guild = "SELECT category_id " \
                            "FROM category " \
                            "WHERE (guild_id) = (?)"
@@ -183,6 +212,14 @@ select_student_courses_by_id = "SELECT sc.lva_nr " \
                                "WHERE sc.lva_nr = c.lva_nr " \
                                "AND sc.semester = c.semester " \
                                "AND (discord_id, sc.semester,lva_name) = (?,?,?)"
+
+select_hidden_role_by_id = "SELECT * " \
+                           "FROM hidden_roles " \
+                           "WHERE (role_id) = (?)"
+
+select_hidden_role_users = "SELECT user_id " \
+                           "FROM hidden_role_users " \
+                           "WHERE (role_id) = (?)"
 
 is_kusss = "SELECT student.* " \
            "FROM student " \
