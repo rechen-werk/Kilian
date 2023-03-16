@@ -358,7 +358,7 @@ if __name__ == '__main__':
                          )
     async def help(ctx: interactions.CommandContext, subcategory: str = None):
         """Commands supported by Kilian"""
-        embeded = interactions.Embed(title="Help Menu", color=0xe70808)
+        embeded = interactions.Embed(title="Help Menu", color=0x701473)
         help_dict = {
             "/kusss": {"params": {"<link>": "link of your KUSSS calender\nis obtained via KUSSS"},
                        "optional_params": {
