@@ -320,7 +320,12 @@ if __name__ == '__main__':
     @interactions.option(description="Channel of the learning group.")
     async def dissolve(ctx: interactions.CommandContext, channel: interactions.Channel):
         """Dissolve the learning group."""
-        await ctx.send("BYE", ephemeral=True)
+        guild_id = str(ctx.guild_id)
+        channel_id = str(channel.id)
+        name = database.studygroup_name(guild_id, channel_id)
+        database.delete_studygroup(guild_id, channel_id)
+        await channel.delete()
+        await ctx.send("Deleted study group: " + name, ephemeral=True)
 
     @studygroup.subcommand()
     @interactions.option(description="Channel of the learning group.")
