@@ -366,6 +366,18 @@ if __name__ == '__main__':
         await ctx.send("You are no longer op!", ephemeral=True)
 
 
+    @bot.command()
+    @interactions.option("Role you want to be managed by Kilian.")
+    async def hide(ctx: interactions.CommandContext):
+        pass
+
+
+    @bot.command()
+    @interactions.option("Role you want not to be managed anymore.")
+    async def show(ctx: interactions.CommandContext):
+        pass
+
+
     @bot.event()
     async def on_message_create(message: interactions.Message):
         """
