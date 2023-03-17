@@ -191,6 +191,10 @@ class Database:
         result = list(self.__cur__.execute(query.select_student_courses_by_id, (discord_id, semester, lva_name)))
         return len(result) > 0
 
+    def course_has_members(self, lva_nr: str):
+        result = list(self.__cur__.execute(query.channel_has_members, (lva_nr,)))
+        return len(result) > 0
+
     def get_link(self, discord_id: str):
         result = list(self.__cur__.execute(query.select_link, (discord_id,)))
         return result[0][0]

@@ -37,6 +37,7 @@ if __name__ == '__main__':
     @interactions.option(description="Optionally provide your matriculation number here.")
     async def kusss(ctx: interactions.CommandContext, link: str, studentnumber: str = None):
         """Take advantage of the features provided by Kilian™."""
+        await ctx.defer(ephemeral=True)
         try:
             guild_id = str(ctx.guild_id)
             current_semester = uni.current_semester()
@@ -137,6 +138,8 @@ if __name__ == '__main__':
             permission_overwrites = list(filter(lambda po: po.id != ctx.author.id, permission_overwrites))
             await channel.modify(permission_overwrites=permission_overwrites)
 
+        await archive(ctx)
+
 
     @bot.command()
     @interactions.option(description="Role you want to ping.")
@@ -180,6 +183,9 @@ if __name__ == '__main__':
     @interactions.option(description="Course chat you want to join.")
     async def join(ctx: interactions.CommandContext, course: interactions.Role):
         """Join a course chat."""
+
+        await ctx.defer(ephemeral=True)
+
         role_id = str(course.id)
         guild_id = str(ctx.guild_id)
 
@@ -250,6 +256,8 @@ if __name__ == '__main__':
         for lva_nr in lva_nrs:
             database.delete_student_role(discord_id, lva_nr, semester)
 
+        await archive(ctx)
+
 
     @bot.command()
     async def toggleping(ctx: interactions.CommandContext):
@@ -299,6 +307,25 @@ if __name__ == '__main__':
                    "**/studid *<@User>* ** - Get the student id of other users. \n" \
                    "\t\tOnly possible if the student has entered his id on /kusss"
         await ctx.send(commands, ephemeral=True)
+
+    async def archive(ctx):
+        """Method for checking if a channel should be archived or deleted"""
+        """
+        TODO
+        test for /unkusss | maybe get a list of channel_ids the user left
+        make delete and archive functional
+        """
+
+        semester = uni.current_semester()
+        guild_id = str(ctx.guild_id)
+        channel_id = str(ctx.channel_id)
+        lva_name = database.get_lva_name_by_channel_id(semester, guild_id, channel_id)
+        lva_nr = database.get_lva_nr(lva_name, semester)
+
+        if ctx.channel.last_message_id is None and not database.course_has_members(lva_nr):
+            print("Channel is ready to be deleted.")
+        elif ctx.channel.last_message_id is not None and not database.course_has_members(lva_nr):
+            print("Channel is ready to be archived.")
 
 
     @bot.command()

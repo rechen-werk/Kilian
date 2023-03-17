@@ -184,6 +184,10 @@ select_student_courses_by_id = "SELECT sc.lva_nr " \
                                "AND sc.semester = c.semester " \
                                "AND (discord_id, sc.semester,lva_name) = (?,?,?)"
 
+channel_has_members = "SELECT * " \
+                      "FROM student_courses " \
+                      "WHERE (lva_nr) = (?)"
+
 is_kusss = "SELECT student.* " \
            "FROM student " \
            "WHERE discord_id = ?"
