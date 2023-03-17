@@ -29,11 +29,11 @@ insert_roles = "REPLACE INTO " \
                "VALUES (?,?,?,?,?)"
 
 insert_studygroup = "REPLACE INTO " \
-                    "studygroup(guild_id, channel_id, name, creator_id, delete_timestamp) " \
+                    "studygroup(guild_id, channel_id, group_name, creator_id, delete_timestamp) " \
                     "VALUES (?,?,?,?,?)"
 
 insert_studygroup_member = "REPLACE INTO " \
-                           "studygroup(guild_id, channel_id, discord_id) " \
+                           "studygroup_member (guild_id, channel_id, discord_id) " \
                            "VALUES (?,?,?)"
 
 insert_category = "REPLACE INTO " \
@@ -122,7 +122,7 @@ create_categories = "CREATE TABLE IF NOT EXISTS category(" \
 create_studygroup = "CREATE TABLE IF NOT EXISTS studygroup(" \
                     "guild_id TEXT NOT NULL," \
                     "channel_id TEXT NOT NULL," \
-                    "name TEXT NOT NULL," \
+                    "group_name TEXT NOT NULL," \
                     "creator_id TEXT NOT NULL," \
                     "delete_timestamp TEXT NOT NULL," \
                     "PRIMARY KEY (guild_id, channel_id)" \
@@ -132,7 +132,8 @@ create_studygroup_member = "CREATE TABLE IF NOT EXISTS studygroup_member(" \
                            "guild_id TEXT NOT NULL," \
                            "channel_id TEXT NOT NULL," \
                            "discord_id TEXT NOT NULL," \
-                           "PRIMARY KEY (guild_id, channel_id)" \
+                           "CONSTRAINT fk_student " \
+                           "FOREIGN KEY (guild_id, channel_id) REFERENCES studygroup ON DELETE CASCADE" \
                            ")"
 
 select_category_by_guild = "SELECT category_id " \
@@ -218,7 +219,7 @@ select_student_courses_by_id = "SELECT sc.lva_nr " \
 
 select_all_studygroups = "SELECT * FROM studygroup"
 
-select_name_from_studygroup = "SELECT name FROM studygroup WHERE (guild_id, channel_id) = (?,?)"
+select_name_from_studygroup = "SELECT group_name FROM studygroup WHERE (guild_id, channel_id) = (?,?)"
 
 select_creator_from_studygroup = "SELECT creator_id FROM studygroup WHERE (guild_id, channel_id) = (?,?)"
 

@@ -221,6 +221,9 @@ class Database:
         result = list(self.__cur__.execute(query.select_creator_from_studygroup, (guild_id, channel_id)))
         return result[0][0]
 
+    def is_studygroup(self, guild_id: str, channel_id: str):
+        return len(list(self.__cur__.execute(query.select_creator_from_studygroup, (guild_id, channel_id))))
+
     def add_studygroup_member(self, guild_id: str, channel_id: str, discord_id: str):
         self.__cur__.execute(query.insert_studygroup_member, (guild_id, channel_id, discord_id))
         self.__con__.commit()

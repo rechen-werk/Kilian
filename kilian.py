@@ -21,7 +21,7 @@ def parse_args():
     return parser.parse_args()
 
 
-def get_category(guild: interactions.Guild):
+async def get_category(guild: interactions.Guild):
     guild_id = str(guild.id)
     if database.has_category(guild_id):
         category = database.get_category(guild_id)
@@ -38,7 +38,6 @@ def get_category(guild: interactions.Guild):
                           interactions.Permissions.USE_APPLICATION_COMMANDS
                 )])
         database.set_cagegory(guild_id, str(category.id))
-        category = str(category.id)
 
     return category
 
@@ -81,7 +80,7 @@ if __name__ == '__main__':
                     missing_courses_by_name[course.lva_name] = set()
                 missing_courses_by_name[course.lva_name].add(course)
 
-            category = get_category(ctx.guild)
+            category = await get_category(ctx.guild)
 
             added_roles = Roles()
             for course_name in missing_courses_by_name:
@@ -301,27 +300,48 @@ if __name__ == '__main__':
 
 
     @bot.command()
-    async def studygroup():
+    async def studygroup(ctx):
         """Create or delete a study group."""
+        pass
 
     @studygroup.subcommand()
     @interactions.option(description="Name of the group you want to create.")
     async def create(ctx: interactions.CommandContext, name: str):
         """Create a learning group. The group will be deleted automatically if not joined for 10 days."""
-        category = get_category(ctx.guild)
+        await ctx.defer(ephemeral=True)
+        category = await get_category(ctx.guild)
         channel = await ctx.guild.create_channel(
             name=name,
             type=interactions.ChannelType.GUILD_VOICE,
             parent_id=category)
         database.create_studygroup(str(ctx.guild_id), str(channel.id), name, str(ctx.author.id), datetime.now() + timedelta(days=10))
+        await channel.add_permission_overwrites(
+            [interactions.Overwrite(
+                id=str(ctx.author.id),
+                type=1,
+                allow=interactions.Permissions.VIEW_CHANNEL | interactions.Permissions.READ_MESSAGE_HISTORY)])
+        database.add_studygroup_member(str(ctx.guild_id), str(channel.id), str(ctx.author.id))
         await ctx.send("Created new study group: " + name, ephemeral=True)
 
     @studygroup.subcommand()
     @interactions.option(description="Channel of the learning group.")
     async def dissolve(ctx: interactions.CommandContext, channel: interactions.Channel):
         """Dissolve the learning group."""
+        await ctx.defer(ephemeral=True)
         guild_id = str(ctx.guild_id)
         channel_id = str(channel.id)
+
+        if not database.is_studygroup(guild_id, channel_id):
+            await ctx.send("This channel is not a study group.", ephemeral=True)
+            return
+
+        command_performer_id = str(ctx.author.id)
+        channel_creator = database.studygroup_creator(guild_id, channel_id)
+
+        if command_performer_id != channel_creator:
+            await ctx.send("You are not privileged to delete this study group.", ephemeral=True)
+            return
+
         name = database.studygroup_name(guild_id, channel_id)
         database.delete_studygroup(guild_id, channel_id)
         await channel.delete()
@@ -332,6 +352,30 @@ if __name__ == '__main__':
     @interactions.option(description="User to invite.")
     async def invite(ctx: interactions.CommandContext, channel: interactions.Channel, user: interactions.Member):
         """Invite a user to the learning group."""
+        await ctx.defer(ephemeral=True)
+        guild_id = str(ctx.guild_id)
+        channel_id = str(channel.id)
+
+        if not database.is_studygroup(guild_id, channel_id):
+            await ctx.send("This channel is not a study group.", ephemeral=True)
+            return
+
+        command_performer_id = str(ctx.author.id)
+        channel_creator = database.studygroup_creator(guild_id, channel_id)
+
+        if command_performer_id != channel_creator:
+            await ctx.send("You are not privileged to invite somebody to this study group.", ephemeral=True)
+            return
+
+        user_id = str(user.id)
+
+        if database.is_studygroup_member(guild_id, channel_id, user_id):
+            await ctx.send(user.name + " is already in this study group.", ephemeral=True)
+            return
+
+        # send invitation
+        await user.send("HI")
+
         await ctx.send("COME", ephemeral=True)
 
     @bot.command()
