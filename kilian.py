@@ -374,9 +374,33 @@ if __name__ == '__main__':
             return
 
         # send invitation
-        await user.send("HI")
+        accept_button = interactions.Button(
+            style=interactions.ButtonStyle.PRIMARY,
+            label="Accept",
+            custom_id="accept_invite",
+        )
+        reject_button = interactions.Button(
+            style=interactions.ButtonStyle.SECONDARY,
+            label="Reject",
+            custom_id="reject_invite",
+        )
+        await user.send(ctx.author.name + " invited you to their study group \"" + channel.name + "\" on " + ctx.guild.name + ".", components=[accept_button, reject_button])
 
-        await ctx.send("COME", ephemeral=True)
+        await ctx.send("Invitation sent to " + user.name + ".", ephemeral=True)
+
+        @bot.component("accept_invite")
+        async def accept_button_response(ctx: interactions.ComponentContext):
+            await ctx.disable_all_components()
+            await channel.add_permission_overwrites(
+                [interactions.Overwrite(
+                    id=user_id,
+                    type=1,
+                    allow=interactions.Permissions.VIEW_CHANNEL | interactions.Permissions.READ_MESSAGE_HISTORY)])
+            database.add_studygroup_member(guild_id, channel_id, user_id)
+
+        @bot.component("reject_invite")
+        async def reject_button_response(ctx: interactions.ComponentContext):
+            await ctx.disable_all_components()
 
     @bot.command()
     async def sleep(ctx: interactions.CommandContext):
