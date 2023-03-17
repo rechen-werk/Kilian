@@ -200,12 +200,15 @@ class Database:
 
     def create_studygroup(self, guild_id: str, channel_id: str, name:str, creator_id: str, delete_timestamp: datetime.datetime):
         self.__cur__.execute(query.insert_studygroup, (guild_id, channel_id, name, creator_id, str(delete_timestamp)))
+        self.__con__.commit()
 
     def update_studygroup(self, delete_timestamp: datetime.datetime, guild_id: str, channel_id: str):
         self.__cur__.execute(query.update_studygroup, (str(delete_timestamp), guild_id, channel_id))
+        self.__con__.commit()
 
     def delete_studygroup(self, guild_id: str, channel_id: str):
         self.__cur__.execute(query.delete_studygroup, (guild_id, channel_id))
+        self.__con__.commit()
 
     def all_studygroups(self):
         return list(self.__cur__.execute(query.select_all_studygroups))
@@ -220,9 +223,11 @@ class Database:
 
     def add_studygroup_member(self, guild_id: str, channel_id: str, discord_id: str):
         self.__cur__.execute(query.insert_studygroup_member, (guild_id, channel_id, discord_id))
+        self.__con__.commit()
 
     def remove_studygroup_member(self, guild_id: str, channel_id: str, discord_id: str):
         self.__cur__.execute(query.delete_studygroup_member, (guild_id, channel_id, discord_id))
+        self.__con__.commit()
 
     def is_studygroup_member(self, guild_id: str, channel_id: str, discord_id: str):
         return len(list(self.__cur__.execute(query.select_studygroup_member, (guild_id, channel_id, discord_id)))) > 0
