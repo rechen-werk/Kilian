@@ -166,6 +166,10 @@ select_lva_nr = "SELECT lva_nr " \
                 "FROM course " \
                 "WHERE (lva_name, semester) = (?,?)"
 
+select_role_id_by_channel_id = "SELECT role_id " \
+                               "FROM roles " \
+                               "WHERE (channel_id) = (?)"
+
 select_lva_name_by_role_id = "SELECT lva_name " \
                              "FROM roles " \
                              "WHERE (semester, guild_id, role_id) = (?,?,?)"

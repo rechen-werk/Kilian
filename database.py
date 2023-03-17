@@ -84,6 +84,10 @@ class Database:
         self.__cur__.executemany(query.delete_role, selection)
         self.__con__.commit()
 
+    def delete_role(self, guild_id: str, role_id: str):
+        self.__cur__.execute(query.delete_role, (guild_id, role_id))
+        self.__con__.commit()
+
     def delete_student_role(self, discord_id: str, lva_nr: str, semester: str):
         self.__cur__.execute(query.delete_student_course, (discord_id, lva_nr, semester))
         self.__con__.commit()
@@ -149,6 +153,10 @@ class Database:
     def get_server_courses(self, guild_id: str, semester: str):
         result = {elem[0] for elem in self.__cur__.execute(query.select_server_courses, (guild_id, semester))}
         return result
+
+    def get_role_id_by_channel_id(self, channel_id: str):
+        result = list(self.__cur__.execute(query.select_role_id_by_channel_id, (channel_id,)))
+        return result[0][0]
 
     def is_active(self, discord_id: str, lva_nr: str, semester: str):
         result = list(self.__cur__.execute(query.select_active, (discord_id, lva_nr, semester)))

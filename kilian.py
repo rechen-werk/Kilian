@@ -137,8 +137,7 @@ if __name__ == '__main__':
             permission_overwrites = channel.permission_overwrites
             permission_overwrites = list(filter(lambda po: po.id != ctx.author.id, permission_overwrites))
             await channel.modify(permission_overwrites=permission_overwrites)
-
-        await archive(ctx)
+            await archive(ctx.guild, channel)
 
 
     @bot.command()
@@ -256,7 +255,7 @@ if __name__ == '__main__':
         for lva_nr in lva_nrs:
             database.delete_student_role(discord_id, lva_nr, semester)
 
-        await archive(ctx)
+        await archive(ctx.guild, channel)
 
 
     @bot.command()
@@ -308,24 +307,23 @@ if __name__ == '__main__':
                    "\t\tOnly possible if the student has entered his id on /kusss"
         await ctx.send(commands, ephemeral=True)
 
-    async def archive(ctx):
+    async def archive(guild: interactions.Guild, channel: interactions.Channel):
         """Method for checking if a channel should be archived or deleted"""
-        """
-        TODO
-        test for /unkusss | maybe get a list of channel_ids the user left
-        make delete and archive functional
-        """
 
+        guild_id = str(guild.id)
         semester = uni.current_semester()
-        guild_id = str(ctx.guild_id)
-        channel_id = str(ctx.channel_id)
+        channel_id = str(channel.id)
         lva_name = database.get_lva_name_by_channel_id(semester, guild_id, channel_id)
         lva_nr = database.get_lva_nr(lva_name, semester)
+        role_id = database.get_role_id_by_channel_id(channel_id)
+        role = await guild.get_role(int(role_id))
 
-        if ctx.channel.last_message_id is None and not database.course_has_members(lva_nr):
-            print("Channel is ready to be deleted.")
-        elif ctx.channel.last_message_id is not None and not database.course_has_members(lva_nr):
-            print("Channel is ready to be archived.")
+        if channel.last_message_id is None and not database.course_has_members(lva_nr):
+            database.delete_role(guild_id, role_id)
+            await role.delete(guild.id)
+            await channel.delete()
+        elif channel.last_message_id is not None and not database.course_has_members(lva_nr):
+            print(f"{channel.name} is ready to be archived.")
 
 
     @bot.command()
