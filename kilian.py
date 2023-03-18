@@ -7,7 +7,7 @@
 import argparse
 import interactions
 import kusss as uni
-from database import Database, Roles, StudentCourse
+from database import Database, Roles, StudentCourse, Archive
 import json
 
 
@@ -61,8 +61,8 @@ if __name__ == '__main__':
                     missing_courses_by_name[course.lva_name] = set()
                 missing_courses_by_name[course.lva_name].add(course)
 
-            if database.has_category(guild_id):
-                category = database.get_category(guild_id)
+            if database.has_category(guild_id, uni.current_semester()):
+                category = database.get_category(guild_id, uni.current_semester())
             else:
                 everyone_id = next(filter(lambda x: x.name == "@everyone", await ctx.guild.get_all_roles())).id
                 category = await ctx.guild.create_channel(
@@ -75,7 +75,7 @@ if __name__ == '__main__':
                             allow=interactions.Permissions.MENTION_EVERYONE |
                                   interactions.Permissions.USE_APPLICATION_COMMANDS
                         )])
-                database.set_cagegory(guild_id, str(category.id))
+                database.set_category(guild_id, str(category.id), uni.current_semester())
 
             added_roles = Roles()
             for course_name in missing_courses_by_name:
@@ -324,6 +324,23 @@ if __name__ == '__main__':
             await channel.delete()
         elif channel.last_message_id is not None and not database.course_has_members(lva_nr):
             print(f"{channel.name} is ready to be archived.")
+            database.insert(Archive(guild_id, channel_id, str(lva_name)))
+            if database.has_category(guild_id, "Archive"):
+                category = database.get_category(guild_id, "Archive")
+                await channel.modify(parent_id=int(category))
+            else:
+                everyone_id = next(filter(lambda x: x.name == "@everyone", await guild.get_all_roles())).id
+                category = await guild.create_channel(
+                    name="Archive", type=interactions.ChannelType.GUILD_CATEGORY,
+                    permission_overwrites=[
+                        interactions.Overwrite(
+                            id=str(everyone_id),
+                            type=0,
+                            deny=interactions.Permissions.VIEW_CHANNEL,
+                            allow=interactions.Permissions.MENTION_EVERYONE |
+                                  interactions.Permissions.USE_APPLICATION_COMMANDS
+                        )])
+                await channel.modify(parent_id=int(category.id))
 
 
     @bot.command()

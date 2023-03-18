@@ -29,8 +29,12 @@ insert_roles = "REPLACE INTO " \
                "VALUES (?,?,?,?,?)"
 
 insert_category = "REPLACE INTO " \
-                  "category(guild_id, category_id) " \
-                  "VALUES (?,?)"
+                  "category(guild_id, category_id, category_name) " \
+                  "VALUES (?,?,?)"
+
+insert_archive = "REPLACE INTO " \
+                 "archived(guild_id, channel_id, lva_name) " \
+                 "VALUES (?,?,?)"
 
 toggle_active = "UPDATE student_courses " \
                 "SET (active) = (?) " \
@@ -41,6 +45,8 @@ delete_student = "DELETE FROM student WHERE discord_id = ?"
 delete_role = "DELETE FROM roles WHERE (guild_id, role_id) = (?,?)"
 
 delete_student_course = "DELETE FROM student_courses WHERE (discord_id, lva_nr, semester) = (?,?,?)"
+
+delete_archived = "DELETE FROM archived WHERE (guild_id, channel_id) = (?,?,?)"
 
 create_student = "CREATE TABLE IF NOT EXISTS student(" \
                  "discord_id TEXT NOT NULL, " \
@@ -100,12 +106,20 @@ create_roles = "CREATE TABLE IF NOT EXISTS roles(" \
 create_categories = "CREATE TABLE IF NOT EXISTS category(" \
                     "guild_id TEXT NOT NULL," \
                     "category_id TEXT NOT NULL," \
-                    "PRIMARY KEY (guild_id)" \
+                    "category_name TEXT NOT NULL," \
+                    "PRIMARY KEY (guild_id, category_id)" \
                     ")"
 
-select_category_by_guild = "SELECT category_id " \
-                           "FROM category " \
-                           "WHERE (guild_id) = (?)"
+create_archived = "CREATE TABLE IF NOT EXISTS archived(" \
+                  "guild_id TEXT NOT NULL," \
+                  "channel_id TEXT NOT NULL," \
+                  "lva_name TEXT NOT NULL," \
+                  "PRIMARY KEY (guild_id, channel_id)" \
+                  ")"
+
+select_category = "SELECT category_id " \
+                  "FROM category " \
+                  "WHERE (guild_id, category_name) = (?,?)"
 
 select_role_by_id = "SELECT * " \
                     "FROM roles " \
