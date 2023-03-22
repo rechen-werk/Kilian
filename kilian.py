@@ -468,13 +468,15 @@ if __name__ == '__main__':
             return
         guild = await message.get_guild()
         guild_id = str(guild_id)
-        mentioned_roles = [role_id for role_id in message.mention_roles if database.is_managed_role(guild_id, role_id)]
+        mentioned_roles = [role_id for role_id in message.mention_roles if
+                           database.is_managed_role(guild_id, role_id) or database.is_hidden_role(role_id)]
         if len(mentioned_roles) == 0:
             return
 
         users_with_anonymous_role = set()
         for role_id in mentioned_roles:
-            users_with_anonymous_role = users_with_anonymous_role | database.get_role_members(guild_id, role_id)
+            users_with_anonymous_role = users_with_anonymous_role | database.get_role_members(guild_id, role_id) | \
+                                        database.get_hidden_role_users(role_id)
 
         ping_string = ""
         for user_id in users_with_anonymous_role:
