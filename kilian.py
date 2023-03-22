@@ -149,13 +149,15 @@ if __name__ == '__main__':
         guild_id = str(ctx.guild_id)
 
         if database.is_managed_role(guild_id, role_id):
-            users_with_anonymous_role = database.get_role_members(guild_id, role_id)
+            users = database.get_role_members(guild_id, role_id)
+        elif database.is_hidden_role(role_id):
+            users = database.get_hidden_role_users(role_id)
         else:
-            await ctx.send("This is not a uni-role, just ping it directly!")
+            await ctx.send("This is not a managed role, just ping it directly!")
             return
 
         ping_string = ""
-        for user_id in users_with_anonymous_role:
+        for user_id in users:
             user = (await ctx.guild.get_member(int(user_id))).user
             ping_string += user.mention
 
