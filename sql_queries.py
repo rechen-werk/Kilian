@@ -55,6 +55,8 @@ delete_student_course = "DELETE FROM student_courses WHERE (discord_id, lva_nr, 
 
 delete_hidden_role = "DELETE FROM hidden_roles WHERE (role_id) = (?)"
 
+delete_hidden_role_user = "DELETE FROM hidden_roles WHERE (role_id, user_id) = (?,?)"
+
 # CREATE
 create_student = "CREATE TABLE IF NOT EXISTS student(" \
                  "discord_id TEXT NOT NULL, " \

@@ -375,6 +375,7 @@ if __name__ == '__main__':
     @interactions.option(description="Role you want to be managed by Kilian.")
     async def hide(ctx: interactions.CommandContext, role: interactions.Role):
         """Hide the role and let Kilian manage it"""
+        await ctx.defer(ephemeral=True)
         if not dads.count(ctx.author.id):
             await ctx.send("You are not my daddy!", ephemeral=True)
             return
@@ -404,6 +405,7 @@ if __name__ == '__main__':
     @interactions.option(description="Role you want not to be managed anymore.")
     async def show(ctx: interactions.CommandContext, role: interactions.Role):
         """Show a managed role and suspend Kilian's services for it"""
+        await ctx.defer(ephemeral=True)
         if not dads.count(ctx.author.id):
             await ctx.send("You are not my daddy!", ephemeral=True)
             return
@@ -427,6 +429,42 @@ if __name__ == '__main__':
             await ctx.guild.add_member_role(role, int(user_id))
 
         await ctx.send("Role should now be visible again", ephemeral=True)
+
+
+    @bot.command()
+    @interactions.option(description="Role you want to add to the person")
+    @interactions.option(description="Person you want to add a role to")
+    async def add(ctx: interactions.CommandContext, role: interactions.Role, member: interactions.Member):
+        await ctx.defer(ephemeral=True)
+        user_id = str(member.user.id)
+        role_id = str(role.id)
+        async with database.lock:
+            if not database.is_hidden_role(role_id):
+                await member.add_role(role, ctx.guild_id)
+            elif user_id in database.get_hidden_role_users(role_id):
+                await ctx.send("User already has this role!")
+                return
+            else:
+                new_service_user = HiddenRoleUsers((role_id, user_id))
+                database.insert(new_service_user)
+        await ctx.send("Role added to user!")
+
+
+    @bot.command()
+    @interactions.option(description="Role you want to remove from the person")
+    @interactions.option(description="Person from whom you want to remove a role")
+    async def remove(ctx: interactions.CommandContext, role: interactions.Role, member: interactions.Member):
+        await ctx.defer(ephemeral=True)
+        user_id = str(member.user.id)
+        role_id = str(role.id)
+        async with database.lock:
+            if not database.is_hidden_role(role_id):
+                await member.remove_role(role, ctx.guild_id)
+            elif user_id not in database.get_hidden_role_users(role_id):
+                await ctx.send("User does not have this role!")
+            else:
+                database.delete_hidden_role_user(role_id, user_id)
+                await ctx.send("Role has been removed!")
 
 
     @bot.event()

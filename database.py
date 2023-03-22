@@ -198,6 +198,10 @@ class Database:
         result = {elem[0] for elem in self.__cur__.execute(query.select_hidden_role_users, (role_id,))}
         return result
 
+    def delete_hidden_role_user(self, role_id: str, user_id: str):
+        self.__cur__.execute(query.delete_hidden_role_user, (role_id, user_id))
+        self.__con__.commit()
+
     def close(self):
         self.__cur__.close()
         self.__con__.close()
