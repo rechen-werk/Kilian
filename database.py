@@ -37,6 +37,7 @@ class Archive:
     def to_db_entry(self) -> tuple:
         return self.guild_id, self.channel_id, self.lva_name
 
+
 class Database:
     def __init__(self):
         self.__con__ = sqlite3.connect(__DB__)
@@ -144,16 +145,28 @@ class Database:
         result = list(self.__cur__.execute(query.select_role_and_channel_by_lva, (guild_id, lva_name, semester)))
         return result[0]
 
-    def has_category(self, guild_id: str, category_name: str) -> bool:
-        result = list(self.__cur__.execute(query.select_category, (guild_id, category_name)))
+    def has_category(self, guild_id: str) -> bool:
+        result = list(self.__cur__.execute(query.select_category, (guild_id,)))
         return len(result) > 0
 
-    def get_category(self, guild_id: str, category_name: str):
-        result = list(self.__cur__.execute(query.select_category, (guild_id, category_name)))
+    def get_category(self, guild_id: str):
+        result = list(self.__cur__.execute(query.select_category, (guild_id,)))
         return result[0][0]
 
-    def set_category(self, guild_id: str, category_id: str, category_name: str):
-        self.__cur__.execute(query.insert_category, (guild_id, category_id, category_name))
+    def get_archive(self, guild_id: str):
+        result = list(self.__cur__.execute(query.select_archive, (guild_id,)))
+        return result[0][0]
+
+    def is_archived(self, guild_id: str, lva_name: str):
+        result = list(self.__cur__.execute(query.get_archived, (guild_id, lva_name)))
+        return len(result) > 0
+
+    def get_archived(self, guild_id: str, lva_name: str):
+        result = list(self.__cur__.execute(query.get_archived, (guild_id, lva_name)))
+        return result[0][0]
+
+    def set_category(self, guild_id: str, category_id: str, archive_id: str):
+        self.__cur__.execute(query.insert_category, (guild_id, category_id, archive_id))
 
     def get_student_ids(self):
         result = self.__cur__.execute(query.select_discord_ids)

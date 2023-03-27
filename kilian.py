@@ -42,10 +42,6 @@ if __name__ == '__main__':
             guild_id = str(ctx.guild_id)
             current_semester = uni.current_semester()
             student = uni.student(str(ctx.author.id), link, studentnumber)
-            if database.is_kusss(str( ctx.author.id)):
-                await ctx.send(f"Your courses will be updated {ctx.author.name}!")
-            else:
-                await ctx.send(f"Welcome on board {ctx.author.name}!")
 
             database.insert(student)
 
@@ -57,12 +53,12 @@ if __name__ == '__main__':
             for course in new_courses:
                 if course.lva_name in guild_course_names:
                     continue
-                if course.lva_name not in missing_courses_by_name.keys():
+                if course.lva_name not in missing_courses_by_name.keys() or database.is_archived(guild_id, course.lva_name):
                     missing_courses_by_name[course.lva_name] = set()
                 missing_courses_by_name[course.lva_name].add(course)
 
-            if database.has_category(guild_id, uni.current_semester()):
-                category = database.get_category(guild_id, uni.current_semester())
+            if database.has_category(guild_id):
+                category = database.get_category(guild_id)
             else:
                 everyone_id = next(filter(lambda x: x.name == "@everyone", await ctx.guild.get_all_roles())).id
                 category = await ctx.guild.create_channel(
@@ -75,7 +71,17 @@ if __name__ == '__main__':
                             allow=interactions.Permissions.MENTION_EVERYONE |
                                   interactions.Permissions.USE_APPLICATION_COMMANDS
                         )])
-                database.set_category(guild_id, str(category.id), uni.current_semester())
+                archive_cat = await ctx.guild.create_channel(
+                    name="Archive", type=interactions.ChannelType.GUILD_CATEGORY,
+                    permission_overwrites=[
+                        interactions.Overwrite(
+                            id=str(everyone_id),
+                            type=0,
+                            deny=interactions.Permissions.VIEW_CHANNEL,
+                            allow=interactions.Permissions.MENTION_EVERYONE |
+                                  interactions.Permissions.USE_APPLICATION_COMMANDS
+                        )])
+                database.set_category(guild_id, str(category.id), str(archive_cat.id))
 
             added_roles = Roles()
             for course_name in missing_courses_by_name:
@@ -98,6 +104,7 @@ if __name__ == '__main__':
                 for channel in all_channels:
                     if channel.id == channel_id:
                         new_user_channels.add(channel)
+                        await channel.modify(parent_id=database.get_category(guild_id))
                         break
 
             from interactions import Permissions as p
@@ -111,19 +118,18 @@ if __name__ == '__main__':
         except uni.InvalidURLException as ex:
             await ctx.send(ex.message, ephemeral=True)
 
+        if database.is_kusss(str( ctx.author.id)):
+            await ctx.send(f"Your courses will be updated {ctx.author.name}!")
+        else:
+            await ctx.send(f"Welcome on board {ctx.author.name}!")
+
 
     @bot.command()
     async def unkusss(ctx: interactions.CommandContext):
         """Unsubscribe from the awesome features provided by Kilian™."""
+        await ctx.defer(ephemeral=True)
         user_id = str(ctx.author.id)
         guild_id = str(ctx.guild_id)
-        if not database.is_kusss(str(ctx.author.id)):
-            await ctx.send(f"Seems that your are not registered {ctx.author.name}! You can join the club anytime with "
-                           f"`/kusss`!")
-            return
-        if database.is_kusss(str(ctx.author.id)):
-            await ctx.send("A pity to see you leave " + ctx.author.name + ". You can join the club anytime with "
-                                                                          "`/kusss`!")
         courses = database.get_added_courses(user_id, uni.current_semester())
         database.delete_student(user_id)
 
@@ -139,12 +145,21 @@ if __name__ == '__main__':
             await channel.modify(permission_overwrites=permission_overwrites)
             await archive(ctx.guild, channel)
 
+        if not database.is_kusss(str(ctx.author.id)):
+            await ctx.send(f"Seems that your are not registered {ctx.author.name}! You can join the club anytime with "
+                           f"`/kusss`!")
+            return
+        if database.is_kusss(str(ctx.author.id)):
+            await ctx.send("A pity to see you leave " + ctx.author.name + ". You can join the club anytime with "
+                                                                          "`/kusss`!")
+
 
     @bot.command()
     @interactions.option(description="Role you want to ping.")
     @interactions.option(description="Message content goes here.")
     async def ping(ctx: interactions.CommandContext, role: interactions.Role, content: str = ""):
         """Ping everyone partaking that subject."""
+        await ctx.defer(ephemeral=True)
         role_id = str(role.id)
         guild_id = str(ctx.guild_id)
 
@@ -172,6 +187,7 @@ if __name__ == '__main__':
     @interactions.option(description="The user you want the student id of.")
     async def studid(ctx: interactions.CommandContext, member: interactions.Member):
         """Get student id of the specified user."""
+        await ctx.defer(ephemeral=True)
         if not database.get_matr_nr(str(member.id)):
             await ctx.send(f"{member.name} hasn't registered a student id in Kilian", ephemeral=True)
             return
@@ -182,9 +198,7 @@ if __name__ == '__main__':
     @interactions.option(description="Course chat you want to join.")
     async def join(ctx: interactions.CommandContext, course: interactions.Role):
         """Join a course chat."""
-
         await ctx.defer(ephemeral=True)
-
         role_id = str(course.id)
         guild_id = str(ctx.guild_id)
 
@@ -217,7 +231,10 @@ if __name__ == '__main__':
         else:
             database.insert(StudentCourse(discord_id, semester, lva_nr, False))
 
-        channel_id = database.get_channel_id(guild_id, role_id)
+        if database.is_archived(guild_id, lva_name):
+            channel_id = database.get_archived(guild_id, lva_name)
+        else:
+            channel_id = database.get_channel_id(guild_id, role_id)
 
         from interactions import Permissions as p
         new_rule = interactions.Overwrite(
@@ -225,7 +242,7 @@ if __name__ == '__main__':
             type=1,
             allow=p.VIEW_CHANNEL | p.READ_MESSAGE_HISTORY)
         channel = await interactions.get(bot, interactions.Channel, object_id=channel_id)
-        await channel.modify(permission_overwrites=channel.permission_overwrites + [new_rule])
+        await channel.modify(permission_overwrites=channel.permission_overwrites + [new_rule], parent_id=database.get_category(guild_id))
 
         await ctx.send(f"Welcome to {lva_name}, {ctx.author.name}.", ephemeral=True)
 
@@ -233,6 +250,7 @@ if __name__ == '__main__':
     @bot.command()
     async def leave(ctx: interactions.CommandContext):
         """Leave this channel."""
+        await ctx.defer(ephemeral=True)
         guild_id = str(ctx.guild_id)
         discord_id = str(ctx.author.id)
         semester = uni.current_semester()
@@ -260,6 +278,7 @@ if __name__ == '__main__':
 
     @bot.command()
     async def toggleping(ctx: interactions.CommandContext):
+        await ctx.defer(ephemeral=True)
         discord_id = str(ctx.author.id)
         guild_id = str(ctx.guild.id)
         semester = uni.current_semester()
@@ -294,6 +313,7 @@ if __name__ == '__main__':
     @bot.command()
     async def help(ctx: interactions.CommandContext):
         """Commands supported by Kilian"""
+        await ctx.defer(ephemeral=True)
         commands = "**/kusss *<link>* *[student-id]* ** - Subscribe to Kilian services. \n" \
                    "\t\t*<link>* is obtained via KUSSS, *[student-id]* is optional and used for other commands \n" \
                    "\t\tYou can get your link from https://www.kusss.jku.at/kusss/ical-multi-form-sz.action. \n" \
@@ -309,7 +329,6 @@ if __name__ == '__main__':
 
     async def archive(guild: interactions.Guild, channel: interactions.Channel):
         """Method for checking if a channel should be archived or deleted"""
-
         guild_id = str(guild.id)
         semester = uni.current_semester()
         channel_id = str(channel.id)
@@ -323,30 +342,15 @@ if __name__ == '__main__':
             await role.delete(guild.id)
             await channel.delete()
         elif channel.last_message_id is not None and not database.course_has_members(lva_nr):
-            print(f"{channel.name} is ready to be archived.")
-            database.insert(Archive(guild_id, channel_id, str(lva_name)))
-            if database.has_category(guild_id, "Archive"):
-                category = database.get_category(guild_id, "Archive")
-                await channel.modify(parent_id=int(category))
-            else:
-                everyone_id = next(filter(lambda x: x.name == "@everyone", await guild.get_all_roles())).id
-                category = await guild.create_channel(
-                    name="Archive", type=interactions.ChannelType.GUILD_CATEGORY,
-                    permission_overwrites=[
-                        interactions.Overwrite(
-                            id=str(everyone_id),
-                            type=0,
-                            deny=interactions.Permissions.VIEW_CHANNEL,
-                            allow=interactions.Permissions.MENTION_EVERYONE |
-                                  interactions.Permissions.USE_APPLICATION_COMMANDS
-                        )])
-                await channel.modify(parent_id=int(category.id))
+            database.insert(Archive(guild_id, channel_id, lva_name))
+            category_id = database.get_archive(guild_id)
+            await channel.modify(parent_id=int(category_id))
 
 
     @bot.command()
     async def sleep(ctx: interactions.CommandContext):
         """Make Kilian go nighty night."""
-
+        await ctx.defer(ephemeral=True)
         if dads.count(ctx.author.id):
             await ctx.send("Good night, daddy!", ephemeral=True)
             await bot._stop()
@@ -358,7 +362,7 @@ if __name__ == '__main__':
     async def op(ctx: interactions.CommandContext):
         """Kilian will grant you the rank of "op".
         It can be revoked by using /deop"""
-
+        await ctx.defer(ephemeral=True)
         user = ctx.author
 
         if not dads.count(ctx.author.id):
@@ -384,7 +388,7 @@ if __name__ == '__main__':
     @bot.command()
     async def deop(ctx: interactions.CommandContext):
         """Kilian will revoke your "op" rank."""
-
+        await ctx.defer(ephemeral=True)
         user = ctx.author
 
         if not dads.count(ctx.author.id):

@@ -29,7 +29,7 @@ insert_roles = "REPLACE INTO " \
                "VALUES (?,?,?,?,?)"
 
 insert_category = "REPLACE INTO " \
-                  "category(guild_id, category_id, category_name) " \
+                  "category(guild_id, category_id, archive_id) " \
                   "VALUES (?,?,?)"
 
 insert_archive = "REPLACE INTO " \
@@ -106,7 +106,7 @@ create_roles = "CREATE TABLE IF NOT EXISTS roles(" \
 create_categories = "CREATE TABLE IF NOT EXISTS category(" \
                     "guild_id TEXT NOT NULL," \
                     "category_id TEXT NOT NULL," \
-                    "category_name TEXT NOT NULL," \
+                    "archive_id TEXT," \
                     "PRIMARY KEY (guild_id, category_id)" \
                     ")"
 
@@ -119,7 +119,7 @@ create_archived = "CREATE TABLE IF NOT EXISTS archived(" \
 
 select_category = "SELECT category_id " \
                   "FROM category " \
-                  "WHERE (guild_id, category_name) = (?,?)"
+                  "WHERE (guild_id) = (?)"
 
 select_role_by_id = "SELECT * " \
                     "FROM roles " \
@@ -201,6 +201,14 @@ select_student_courses_by_id = "SELECT sc.lva_nr " \
                                "WHERE sc.lva_nr = c.lva_nr " \
                                "AND sc.semester = c.semester " \
                                "AND (discord_id, sc.semester,lva_name) = (?,?,?)"
+
+select_archive = "SELECT archive_id " \
+                 "FROM category " \
+                 "WHERE (guild_id) = (?)"
+
+get_archived = "SELECT channel_id " \
+              "FROM archived " \
+              "WHERE (guild_id, lva_name) = (?,?)"
 
 channel_has_members = "SELECT * " \
                       "FROM student_courses " \
