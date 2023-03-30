@@ -315,7 +315,7 @@ if __name__ == '__main__':
                 await ctx.send("You will no longer be pinged.", ephemeral=True)
 
 
-async def archive(guild: interactions.Guild, channel: interactions.Channel):
+    async def archive(guild: interactions.Guild, channel: interactions.Channel):
         """Method for checking if a channel should be archived or deleted"""
         guild_id = str(guild.id)
         semester = uni.current_semester()
