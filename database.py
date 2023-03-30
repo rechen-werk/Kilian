@@ -28,6 +28,16 @@ class StudentCourse:
         return self.discord_id, self.lva_nr, self.semester, self.active
 
 
+class Archive:
+    def __init__(self, guild_id: str, channel_id: str, lva_name: str):
+        self.guild_id = guild_id
+        self.channel_id = channel_id
+        self.lva_name = lva_name
+
+    def to_db_entry(self) -> tuple:
+        return self.guild_id, self.channel_id, self.lva_name
+
+
 class Database:
     def __init__(self):
         self.__con__ = sqlite3.connect(__DB__)
@@ -51,6 +61,7 @@ class Database:
         self.__cur__.execute(query.create_class)
         self.__cur__.execute(query.create_roles)
         self.__cur__.execute(query.create_categories)
+        self.__cur__.execute(query.create_archived)
 
     def insert(self, obj):
         match obj:
@@ -67,6 +78,8 @@ class Database:
                 self.__cur__.executemany(query.insert_roles, obj)
             case StudentCourse():
                 self.__cur__.execute(query.insert_student_courses, obj.to_db_entry())
+            case Archive():
+                self.__cur__.execute(query.insert_archive, obj.to_db_entry())
             case _:
                 return NotImplemented
         self.__con__.commit()
@@ -83,6 +96,13 @@ class Database:
         selection = list(zip([guild_id] * len(role_ids), role_ids))
         self.__cur__.executemany(query.delete_role, selection)
         self.__con__.commit()
+
+    def delete_role(self, guild_id: str, role_id: str):
+        self.__cur__.execute(query.delete_role, (guild_id, role_id))
+        self.__con__.commit()
+
+    def delete_archive(self, guild_id: str, channel_id: str):
+        self.__cur__.execute(query.delete_archived, (guild_id, channel_id))
 
     def delete_student_role(self, discord_id: str, lva_nr: str, semester: str):
         self.__cur__.execute(query.delete_student_course, (discord_id, lva_nr, semester))
@@ -126,15 +146,27 @@ class Database:
         return result[0]
 
     def has_category(self, guild_id: str) -> bool:
-        result = list(self.__cur__.execute(query.select_category_by_guild, (guild_id,)))
+        result = list(self.__cur__.execute(query.select_category, (guild_id,)))
         return len(result) > 0
 
     def get_category(self, guild_id: str):
-        result = list(self.__cur__.execute(query.select_category_by_guild, (guild_id,)))
+        result = list(self.__cur__.execute(query.select_category, (guild_id,)))
         return result[0][0]
 
-    def set_cagegory(self, guild_id: str, category_id: str):
-        self.__cur__.execute(query.insert_category, (guild_id, category_id))
+    def get_archive(self, guild_id: str):
+        result = list(self.__cur__.execute(query.select_archive, (guild_id,)))
+        return result[0][0]
+
+    def is_archived(self, guild_id: str, lva_name: str):
+        result = list(self.__cur__.execute(query.get_archived, (guild_id, lva_name)))
+        return len(result) > 0
+
+    def get_archived(self, guild_id: str, lva_name: str):
+        result = list(self.__cur__.execute(query.get_archived, (guild_id, lva_name)))
+        return result[0][0]
+
+    def set_category(self, guild_id: str, category_id: str, archive_id: str):
+        self.__cur__.execute(query.insert_category, (guild_id, category_id, archive_id))
 
     def get_student_ids(self):
         result = self.__cur__.execute(query.select_discord_ids)
@@ -149,6 +181,10 @@ class Database:
     def get_server_courses(self, guild_id: str, semester: str):
         result = {elem[0] for elem in self.__cur__.execute(query.select_server_courses, (guild_id, semester))}
         return result
+
+    def get_role_id_by_channel_id(self, channel_id: str):
+        result = list(self.__cur__.execute(query.select_role_id_by_channel_id, (channel_id,)))
+        return result[0][0]
 
     def is_active(self, discord_id: str, lva_nr: str, semester: str):
         result = list(self.__cur__.execute(query.select_active, (discord_id, lva_nr, semester)))
@@ -189,6 +225,10 @@ class Database:
 
     def student_has_course(self, discord_id: str, semester: str, lva_name: str):
         result = list(self.__cur__.execute(query.select_student_courses_by_id, (discord_id, semester, lva_name)))
+        return len(result) > 0
+
+    def course_has_members(self, lva_nr: str):
+        result = list(self.__cur__.execute(query.channel_has_members, (lva_nr,)))
         return len(result) > 0
 
     def get_link(self, discord_id: str):
