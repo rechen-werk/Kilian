@@ -129,6 +129,11 @@ if __name__ == '__main__':
     @bot.command()
     async def unkusss(ctx: interactions.CommandContext):
         """Unsubscribe from the awesome features provided by Kilian™."""
+        if not database.is_kusss(str(ctx.author.id)):
+            await ctx.send(f"Seems that your are not registered {ctx.author.name}! You can join the club anytime with "
+                           f"`/kusss`!")
+            return
+
         await ctx.defer(ephemeral=True)
         user_id = str(ctx.author.id)
         guild_id = str(ctx.guild_id)
@@ -147,10 +152,6 @@ if __name__ == '__main__':
             await channel.modify(permission_overwrites=permission_overwrites)
             await archive(ctx.guild, channel)
 
-        if not database.is_kusss(str(ctx.author.id)):
-            await ctx.send(f"Seems that your are not registered {ctx.author.name}! You can join the club anytime with "
-                           f"`/kusss`!")
-            return
         if database.is_kusss(str(ctx.author.id)):
             await ctx.send("A pity to see you leave " + ctx.author.name + ". You can join the club anytime with "
                                                                           "`/kusss`!")
