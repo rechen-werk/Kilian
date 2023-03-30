@@ -101,8 +101,8 @@ class Database:
         self.__cur__.execute(query.delete_role, (guild_id, role_id))
         self.__con__.commit()
 
-    def delete_archive(self, guild_id: str, channel_id: str, lva_name: str):
-        self.__cur__.execute(query.delete_archived, (guild_id, channel_id, lva_name))
+    def delete_archive(self, guild_id: str, channel_id: str):
+        self.__cur__.execute(query.delete_archived, (guild_id, channel_id))
 
     def delete_student_role(self, discord_id: str, lva_nr: str, semester: str):
         self.__cur__.execute(query.delete_student_course, (discord_id, lva_nr, semester))

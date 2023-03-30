@@ -46,7 +46,7 @@ delete_role = "DELETE FROM roles WHERE (guild_id, role_id) = (?,?)"
 
 delete_student_course = "DELETE FROM student_courses WHERE (discord_id, lva_nr, semester) = (?,?,?)"
 
-delete_archived = "DELETE FROM archived WHERE (guild_id, channel_id) = (?,?,?)"
+delete_archived = "DELETE FROM archived WHERE (guild_id, channel_id) = (?,?)"
 
 create_student = "CREATE TABLE IF NOT EXISTS student(" \
                  "discord_id TEXT NOT NULL, " \
@@ -107,7 +107,7 @@ create_categories = "CREATE TABLE IF NOT EXISTS category(" \
                     "guild_id TEXT NOT NULL," \
                     "category_id TEXT NOT NULL," \
                     "archive_id TEXT," \
-                    "PRIMARY KEY (guild_id, category_id)" \
+                    "PRIMARY KEY (guild_id)" \
                     ")"
 
 create_archived = "CREATE TABLE IF NOT EXISTS archived(" \
@@ -207,8 +207,8 @@ select_archive = "SELECT archive_id " \
                  "WHERE (guild_id) = (?)"
 
 get_archived = "SELECT channel_id " \
-              "FROM archived " \
-              "WHERE (guild_id, lva_name) = (?,?)"
+               "FROM archived " \
+               "WHERE (guild_id, lva_name) = (?,?)"
 
 channel_has_members = "SELECT * " \
                       "FROM student_courses " \

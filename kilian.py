@@ -105,6 +105,8 @@ if __name__ == '__main__':
                     if channel.id == channel_id:
                         new_user_channels.add(channel)
                         await channel.modify(parent_id=database.get_category(guild_id))
+                        if database.is_archived(guild_id, course.lva_name):
+                            database.delete_archive(guild_id, str(channel.id))
                         break
 
             from interactions import Permissions as p
@@ -233,6 +235,7 @@ if __name__ == '__main__':
 
         if database.is_archived(guild_id, lva_name):
             channel_id = database.get_archived(guild_id, lva_name)
+            database.delete_archive(guild_id, channel_id)
         else:
             channel_id = database.get_channel_id(guild_id, role_id)
 
