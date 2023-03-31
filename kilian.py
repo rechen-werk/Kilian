@@ -38,10 +38,16 @@ if __name__ == '__main__':
     async def kusss(ctx: interactions.CommandContext, link: str, studentnumber: str = None):
         """Take advantage of the features provided by Kilian™."""
         await ctx.defer(ephemeral=True)
+
         try:
             guild_id = str(ctx.guild_id)
             current_semester = uni.current_semester()
             student = uni.student(str(ctx.author.id), link, studentnumber)
+
+            if database.is_kusss(str(ctx.author.id)):
+                await ctx.send(f"Your courses will be updated {ctx.author.name}!")
+            else:
+                await ctx.send(f"Welcome on board {ctx.author.name}!")
 
             database.insert(student)
 
@@ -53,7 +59,8 @@ if __name__ == '__main__':
             for course in new_courses:
                 if course.lva_name in guild_course_names:
                     continue
-                if course.lva_name not in missing_courses_by_name.keys() or database.is_archived(guild_id, course.lva_name):
+                if course.lva_name not in missing_courses_by_name.keys() or database.is_archived(guild_id,
+                                                                                                 course.lva_name):
                     missing_courses_by_name[course.lva_name] = set()
                 missing_courses_by_name[course.lva_name].add(course)
 
@@ -77,7 +84,8 @@ if __name__ == '__main__':
                         interactions.Overwrite(
                             id=str(everyone_id),
                             type=0,
-                            deny=interactions.Permissions.VIEW_CHANNEL,
+                            deny=interactions.Permissions.VIEW_CHANNEL |
+                                 interactions.Permissions.SEND_MESSAGES,
                             allow=interactions.Permissions.MENTION_EVERYONE |
                                   interactions.Permissions.USE_APPLICATION_COMMANDS
                         )])
@@ -120,21 +128,17 @@ if __name__ == '__main__':
         except uni.InvalidURLException as ex:
             await ctx.send(ex.message, ephemeral=True)
 
-        if database.is_kusss(str( ctx.author.id)):
-            await ctx.send(f"Your courses will be updated {ctx.author.name}!")
-        else:
-            await ctx.send(f"Welcome on board {ctx.author.name}!")
-
 
     @bot.command()
     async def unkusss(ctx: interactions.CommandContext):
         """Unsubscribe from the awesome features provided by Kilian™."""
+        await ctx.defer(ephemeral=True)
+
         if not database.is_kusss(str(ctx.author.id)):
             await ctx.send(f"Seems that your are not registered {ctx.author.name}! You can join the club anytime with "
                            f"`/kusss`!")
             return
 
-        await ctx.defer(ephemeral=True)
         user_id = str(ctx.author.id)
         guild_id = str(ctx.guild_id)
         courses = database.get_added_courses(user_id, uni.current_semester())
@@ -152,9 +156,8 @@ if __name__ == '__main__':
             await channel.modify(permission_overwrites=permission_overwrites)
             await archive(ctx.guild, channel)
 
-        if database.is_kusss(str(ctx.author.id)):
-            await ctx.send("A pity to see you leave " + ctx.author.name + ". You can join the club anytime with "
-                                                                          "`/kusss`!")
+        await ctx.send("A pity to see you leave " + ctx.author.name + ". You can join the club anytime with "
+                                                                      "`/kusss`!")
 
 
     @bot.command()
@@ -246,7 +249,8 @@ if __name__ == '__main__':
             type=1,
             allow=p.VIEW_CHANNEL | p.READ_MESSAGE_HISTORY)
         channel = await interactions.get(bot, interactions.Channel, object_id=channel_id)
-        await channel.modify(permission_overwrites=channel.permission_overwrites + [new_rule], parent_id=database.get_category(guild_id))
+        await channel.modify(permission_overwrites=channel.permission_overwrites + [new_rule],
+                             parent_id=database.get_category(guild_id))
 
         await ctx.send(f"Welcome to {lva_name}, {ctx.author.name}.", ephemeral=True)
 
@@ -333,7 +337,7 @@ if __name__ == '__main__':
             database.insert(Archive(guild_id, channel_id, lva_name))
             category_id = database.get_archive(guild_id)
             await channel.modify(parent_id=int(category_id))
-           
+
 
     @bot.command()
     async def sleep(ctx: interactions.CommandContext):
