@@ -7,7 +7,7 @@
 import argparse
 import interactions
 import kusss as uni
-from database import Database, Roles, StudentCourse, Archive
+from database import Database, Roles, StudentCourse, Archive, Archivesniffer
 import json
 
 
@@ -403,6 +403,25 @@ if __name__ == '__main__':
         await user.remove_role(role)
         await ctx.send("You are no longer op!", ephemeral=True)
 
+    @bot.command()
+    async def archivesniffer(ctx: interactions.CommandContext):
+        """Check out archived channels."""
+        await ctx.defer(ephemeral=True)
+        guild_id = str(ctx.guild.id)
+        discord_id = str(ctx.author.id)
+
+        channel_ids = database.get_all_archived()
+        archived_channels = list()
+
+#        Doesn't work?
+#        for channel_id in channel_ids:
+#            archived_channels.append(interactions.ChannelRequest.get_channel(int(channel_id)))
+
+        if database.is_archivesniffer(guild_id, discord_id):
+            database.delete_archivesniffer(guild_id, discord_id)
+        else:
+            database.insert(Archivesniffer(guild_id, discord_id))
+
 
     # All new commands which are below help won't be listed inside the help choices
     @bot.command()
@@ -442,6 +461,9 @@ if __name__ == '__main__':
                         "details": "Only possible if the student has entered his id on /kusss\nYou can still update "
                                    "your studid with /kusss",
                         "description": "Get the student id of other users.", "inline": True},
+            "/archivesniffer": {"params": {}, "optional_params": {},
+                                "details": "",
+                                "description": "Gain permissions for viewing archived channels", "inline": True},
         }
         if not subcategory:
             for command in help_dict.keys():

@@ -37,6 +37,14 @@ class Archive:
     def to_db_entry(self) -> tuple:
         return self.guild_id, self.channel_id, self.lva_name
 
+class Archivesniffer:
+    def __init__(self, guild_id: str, discord_id: str):
+        self.guild_id = guild_id
+        self.discord_id = discord_id
+
+    def to_db_entry(self) -> tuple:
+        return self.guild_id, self.discord_id
+
 
 class Database:
     def __init__(self):
@@ -62,6 +70,7 @@ class Database:
         self.__cur__.execute(query.create_roles)
         self.__cur__.execute(query.create_categories)
         self.__cur__.execute(query.create_archived)
+        self.__cur__.execute(query.create_archivesniffers)
 
     def insert(self, obj):
         match obj:
@@ -80,6 +89,8 @@ class Database:
                 self.__cur__.execute(query.insert_student_courses, obj.to_db_entry())
             case Archive():
                 self.__cur__.execute(query.insert_archive, obj.to_db_entry())
+            case Archivesniffer():
+                self.__cur__.execute(query.insert_archivesniffer, obj.to_db_entry)
             case _:
                 return NotImplemented
         self.__con__.commit()
@@ -108,6 +119,10 @@ class Database:
         self.__cur__.execute(query.delete_student_course, (discord_id, lva_nr, semester))
         self.__con__.commit()
 
+    def delete_archivesniffer(self, guild_id: str, discord_id: str):
+        self.__cur__.execute(query.delete_archivesniffer, (guild_id, discord_id))
+        self.__con__.commit()
+
     def is_managed_role(self, guild_id: str, role_id: str) -> bool:
         result = list(self.__cur__.execute(query.select_role_by_id, (guild_id, role_id)))
         return len(result) >= 1
@@ -118,6 +133,10 @@ class Database:
 
     def is_needed_course(self, lva_name: str, semester: str) -> bool:
         result = list(self.__cur__.execute(query.select_student_courses_by_lva, (lva_name, semester)))
+        return len(result) > 0
+
+    def is_archivesniffer(self, guild_id: str, discord_id: str):
+        result = list(self.__cur__.execute(query.is_archivesniffer, (guild_id, discord_id)))
         return len(result) > 0
 
     def get_role_members(self, guild_id: str, role_id: str) -> set:
@@ -185,6 +204,10 @@ class Database:
     def get_role_id_by_channel_id(self, channel_id: str):
         result = list(self.__cur__.execute(query.select_role_id_by_channel_id, (channel_id,)))
         return result[0][0]
+
+    def get_all_archived(self):
+        result = list(self.__cur__.execute(query.select_all_archived))
+        return result
 
     def is_active(self, discord_id: str, lva_nr: str, semester: str):
         result = list(self.__cur__.execute(query.select_active, (discord_id, lva_nr, semester)))

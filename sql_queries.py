@@ -36,6 +36,10 @@ insert_archive = "REPLACE INTO " \
                  "archived(guild_id, channel_id, lva_name) " \
                  "VALUES (?,?,?)"
 
+insert_archivesniffer = "REPLACE INTO " \
+                        "archivesniffers(guild_id, discord_id) " \
+                        "VALUES (?,?,?)"
+
 toggle_active = "UPDATE student_courses " \
                 "SET (active) = (?) " \
                 "WHERE (discord_id, lva_nr, semester) = (?,?,?)"
@@ -47,6 +51,8 @@ delete_role = "DELETE FROM roles WHERE (guild_id, role_id) = (?,?)"
 delete_student_course = "DELETE FROM student_courses WHERE (discord_id, lva_nr, semester) = (?,?,?)"
 
 delete_archived = "DELETE FROM archived WHERE (guild_id, channel_id) = (?,?)"
+
+delete_archivesniffer = "DELETE FROM archivesniffers WHERE (guild_id, discord_id) = (?,?)"
 
 create_student = "CREATE TABLE IF NOT EXISTS student(" \
                  "discord_id TEXT NOT NULL, " \
@@ -63,6 +69,12 @@ create_course = "CREATE TABLE IF NOT EXISTS course(" \
                 "link TEXT NOT NULL, " \
                 "PRIMARY KEY (lva_nr, semester)" \
                 ")"
+
+create_archivesniffers = "CREATE TABLE IF NOT EXISTS archivesniffers(" \
+                         "guild_id TEXT NOT NULL, " \
+                         "discord_id TEXT NOT NULL, " \
+                         "PRIMARY KEY(guild_id, discord_id)" \
+                         ")" \
 
 create_student_courses = "CREATE TABLE IF NOT EXISTS student_courses(" \
                          "discord_id TEXT NOT NULL, " \
@@ -206,6 +218,9 @@ select_archive = "SELECT archive_id " \
                  "FROM category " \
                  "WHERE (guild_id) = (?)"
 
+select_all_archived = "SELECT archive_id " \
+                      "FROM archived" \
+
 get_archived = "SELECT channel_id " \
                "FROM archived " \
                "WHERE (guild_id, lva_name) = (?,?)"
@@ -221,6 +236,10 @@ is_kusss = "SELECT student.* " \
 is_managed_channel = "SELECT roles.* " \
                      "FROM roles " \
                      "WHERE channel_id = ?"
+
+is_archivesniffer = "SELECT * " \
+                    "FROM archivesniffers " \
+                    "WHERE (guild_id, discord_id) = (?,?)" \
 
 select_link = "SELECT calendar_link " \
               "FROM student " \
