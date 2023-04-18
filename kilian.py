@@ -41,8 +41,15 @@ async def get_category(guild: interactions.Guild):
 
     return category
 
+def purge_inactive_voice_channels(guild: interactions.Guild, database: Database):
+    all_studygroups = database.all_studygroups()
+    all_studygroups
+
+    pass
+
 
 if __name__ == '__main__':
+    __invite_number__ = 0
     args = parse_args()
 
     with open("config.json", 'r') as f:
@@ -54,6 +61,7 @@ if __name__ == '__main__':
 
     bot = interactions.Client(token=bot_token, intents=interactions.Intents.ALL)
 
+    purge_inactive_voice_channels(None, database)
 
     @bot.command()
     @interactions.option(description="Provide the calendar link from KUSSS here.")
@@ -377,13 +385,14 @@ if __name__ == '__main__':
         accept_button = interactions.Button(
             style=interactions.ButtonStyle.PRIMARY,
             label="Accept",
-            custom_id="accept_invite",
+            custom_id="accept_invite" + str(__invite_number__),
         )
         reject_button = interactions.Button(
             style=interactions.ButtonStyle.SECONDARY,
             label="Reject",
-            custom_id="reject_invite",
+            custom_id="reject_invite" + str(__invite_number__),
         )
+        #__invite_number__ = __invite_number__ + 1
         await user.send(ctx.author.name + " invited you to their study group \"" + channel.name + "\" on " + ctx.guild.name + ".", components=[accept_button, reject_button])
 
         await ctx.send("Invitation sent to " + user.name + ".", ephemeral=True)
@@ -391,11 +400,13 @@ if __name__ == '__main__':
         @bot.component("accept_invite")
         async def accept_button_response(ctx: interactions.ComponentContext):
             await ctx.disable_all_components()
-            await channel.add_permission_overwrites(
-                [interactions.Overwrite(
-                    id=user_id,
-                    type=1,
-                    allow=interactions.Permissions.VIEW_CHANNEL | interactions.Permissions.READ_MESSAGE_HISTORY)])
+            from interactions import Permissions as p
+            new_rule = interactions.Overwrite(
+                id=user_id,
+                type=1,
+                allow=p.VIEW_CHANNEL | p.READ_MESSAGE_HISTORY)
+            await channel.modify(permission_overwrites=channel.permission_overwrites + [new_rule])
+
             database.add_studygroup_member(guild_id, channel_id, user_id)
 
         @bot.component("reject_invite")
